@@ -16,6 +16,6 @@ I chose this issue because it is Tier 1, documentation-focused, and scoped to on
 
 **Branch name:** docs/117-add-api-curl-examples
 
-**Setup confirmation:** [ ] App runs locally at localhost:5173
+**Setup confirmation:** [x] App runs locally at localhost:5173
 
 **Cohort ledger:** [ ] Issue added to cohort ledger
