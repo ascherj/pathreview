@@ -29,8 +29,8 @@ normalisation implied by the reported ``.strip()`` (the guard returns the raw
 value, un-stripped). See PLAN.md.
 
 ``test_reported_pattern_reproduces_issue_41`` reproduces the reported crash.
-The ``execute`` tests below are the regression lock. ``...description_is_stripped``
-is marked xfail: it documents the normalisation the Week 9 fix will restore.
+The ``execute`` tests below are the regression lock. The Week 9 fix restores the
+null-safe ``.strip()`` normalisation, so ``...description_is_stripped`` now passes.
 """
 
 from unittest.mock import patch
@@ -81,7 +81,7 @@ class TestGitHubToolDescriptionHandling:
         "payload, expected_exc",
         [
             ({"name": "r", "description": None}, AttributeError),  # null value
-            ({"name": "r"}, KeyError),                             # key absent
+            ({"name": "r"}, KeyError),  # key absent
         ],
     )
     def test_reported_pattern_reproduces_issue_41(self, payload, expected_exc):
@@ -91,9 +91,13 @@ class TestGitHubToolDescriptionHandling:
 
     def test_execute_null_description_does_not_crash(self, tool):
         """A repo with description=null must degrade to "" instead of crashing."""
-        with patch("agent.tools.github_tool.httpx.get",
-                   return_value=_FakeResponse(_repo_payload(description=None))), \
-             patch.object(GitHubTool, "_has_readme", return_value=True):
+        with (
+            patch(
+                "agent.tools.github_tool.httpx.get",
+                return_value=_FakeResponse(_repo_payload(description=None)),
+            ),
+            patch.object(GitHubTool, "_has_readme", return_value=True),
+        ):
             result = tool.execute({"github_username": "octocat", "repo_name": "my-repo"})
 
         assert result.success is True
@@ -104,9 +108,10 @@ class TestGitHubToolDescriptionHandling:
         """A payload with no description key at all must also degrade to ""."""
         payload = _repo_payload()
         del payload["description"]
-        with patch("agent.tools.github_tool.httpx.get",
-                   return_value=_FakeResponse(payload)), \
-             patch.object(GitHubTool, "_has_readme", return_value=True):
+        with (
+            patch("agent.tools.github_tool.httpx.get", return_value=_FakeResponse(payload)),
+            patch.object(GitHubTool, "_has_readme", return_value=True),
+        ):
             result = tool.execute({"github_username": "octocat", "repo_name": "my-repo"})
 
         assert result.success is True
@@ -114,23 +119,26 @@ class TestGitHubToolDescriptionHandling:
 
     def test_execute_preserves_present_description(self, tool):
         """A normal description must still be passed through unchanged."""
-        with patch("agent.tools.github_tool.httpx.get",
-                   return_value=_FakeResponse(_repo_payload(description="Hello world"))), \
-             patch.object(GitHubTool, "_has_readme", return_value=True):
+        with (
+            patch(
+                "agent.tools.github_tool.httpx.get",
+                return_value=_FakeResponse(_repo_payload(description="Hello world")),
+            ),
+            patch.object(GitHubTool, "_has_readme", return_value=True),
+        ):
             result = tool.execute({"github_username": "octocat", "repo_name": "my-repo"})
 
         assert result.data["description"] == "Hello world"
 
-    @pytest.mark.xfail(
-        reason="Week 9: guard returns the raw value; the .strip() normalisation "
-               "referenced by issue #41 is not yet restored. See PLAN.md.",
-        strict=True,
-    )
     def test_execute_description_is_stripped(self, tool):
-        """The fix should restore null-safe whitespace stripping of the description."""
-        with patch("agent.tools.github_tool.httpx.get",
-                   return_value=_FakeResponse(_repo_payload(description="  padded  "))), \
-             patch.object(GitHubTool, "_has_readme", return_value=True):
+        """The fix restores null-safe whitespace stripping of the description (issue #41)."""
+        with (
+            patch(
+                "agent.tools.github_tool.httpx.get",
+                return_value=_FakeResponse(_repo_payload(description="  padded  ")),
+            ),
+            patch.object(GitHubTool, "_has_readme", return_value=True),
+        ):
             result = tool.execute({"github_username": "octocat", "repo_name": "my-repo"})
 
         assert result.data["description"] == "padded"

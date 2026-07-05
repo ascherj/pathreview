@@ -95,10 +95,12 @@ class GitHubTool(BaseTool):
 
         repo_json = response.json()
 
-        # Extract metadata, handling null values
+        # Extract metadata, handling null/missing values. GitHub returns
+        # description: null for repos created without one (issue #41), so guard
+        # with `or ""` before .strip() to avoid AttributeError/KeyError.
         metadata = {
             "name": repo_json.get("name", ""),
-            "description": repo_json.get("description") or "",
+            "description": (repo_json.get("description") or "").strip(),
             "primary_language": repo_json.get("language") or "Unknown",
             "star_count": repo_json.get("stargazers_count", 0),
             "fork_count": repo_json.get("forks_count", 0),
