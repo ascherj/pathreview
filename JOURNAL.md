@@ -46,3 +46,32 @@ a new/updated test in `tests/unit/test_github_tool.py`.
   regression test* (and confirming the guard holds for the exact case the issue
   describes) rather than patching a live crash. I'll confirm the current
   behaviour against the issue's repro before opening the PR.
+
+## Week 8 — Reproduction & solution planning
+
+**Reproduction commit link:** https://github.com/RyannWinn/pathreview/commit/48e2d6f9c8367a8f62897d5151dc9ef0dec79515
+
+**Reproduction summary:**
+I stood up the project locally (Python 3.11.15 venv, `pip install -e ".[dev]"`)
+and drove `GitHubTool.execute` with a mocked GitHub API response whose
+`description` was `null`, plus a variant with the key absent. Reproducing the
+exact access pattern the issue reports — `repo_data['description'].strip()` —
+confirms the reported failure class is real: it raises `AttributeError` on a
+`null` value and `KeyError` when the key is missing. However, the tool's *live*
+extraction already guards this (`repo_json.get("description") or ""`), so
+`execute` returns `description == ""` instead of crashing. The genuine gaps are
+that (a) no regression test existed to lock the behaviour in, and (b) the guard
+dropped the whitespace `.strip()` normalisation the issue references. I captured
+all of this in `tests/unit/test_github_tool.py` (5 passing + 1 `xfail` for the
+not-yet-restored stripping).
+
+**PLAN.md link:** [PLAN.md](PLAN.md)
+
+**Walkthrough video (recommended):** _(not recorded yet)_
+
+**Blockers or open questions:**
+The manifest describes a buggy `.strip()` line that isn't literally present in
+this seeded snapshot, so my fix is test-first (regression lock) plus restoring
+null-safe stripping rather than a "remove the crash" diff. Open question for a
+mentor: do maintainers want the PR scoped purely to the regression test, or is
+restoring `.strip()` normalisation in scope for issue #41 too?
