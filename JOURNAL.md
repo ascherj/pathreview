@@ -101,7 +101,7 @@ locally, so the PR is opened via the GitHub web UI.
 
 ### Check-in 2 (end of week)
 
-**PR link:** _add PR URL here once opened — see PR body prepared in the PR_
+**PR link:** https://github.com/jamjamgobambam/pathreview/pull/132
 
 **Branch:** `fix/41-github-tool-keyerror-no-description`
 
