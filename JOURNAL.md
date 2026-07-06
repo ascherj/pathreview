@@ -131,3 +131,89 @@ whitespace stripping. All pass.
 
 **Draft PR feedback received from:** none yet (draft PR to be shared in the
 course Discord for peer review before marking ready)
+
+## Week 10 — Iteration & reflection
+
+### Reviewer feedback
+
+**Feedback received:** [ ] Yes  [x] No — still awaiting review
+
+**Summary of feedback:**
+No reviewer or maintainer comments arrived on the PR by the end of the week. The
+PR is open with CI showing the repo's pre-existing red status (documented in the
+Week 9 Check-in 2 baseline), and my change adds no new failures on top of it.
+
+**How you responded:**
+No changes were required since no feedback came in. To make review as easy as
+possible if it does arrive, I front-loaded the PR description with the
+pre-existing-failure baseline table and a reviewer note explaining the one
+subtlety a maintainer is most likely to question — why the fix restores `.strip()`
+and adds a test rather than "removing a crash" that was already partially guarded.
+
+---
+
+### Reflection
+
+**What was harder than you expected?**
+The hardest part was not writing the fix — it was discovering that the issue as
+filed didn't match the code. Issue #41 says the tool does
+`repo_data['description'].strip()` and crashes, but the actual
+`agent/tools/github_tool.py` already had `repo_json.get("description") or ""`, so
+the literal crash was already neutralised. I spent most of my time proving the
+*true* state: I wrote a probe that mocked the GitHub API with `description: null`
+and confirmed (a) the reported access pattern really does raise `AttributeError`/
+`KeyError`, but (b) the live tool returns `""` and doesn't crash. Deciding what a
+faithful "fix" even *is* in that situation — restore the dropped `.strip()`
+normalisation plus add the regression test that never existed — was more judgment
+work than I expected from a "good first issue." The second surprise was the sheer
+volume of pre-existing breakage: 53 failing unit tests, 182 ruff errors, 99 mypy
+errors before I touched anything. Figuring out that "does it pass?" had to mean
+"do I add *new* failures?" took real care.
+
+**What did you learn about working in a large codebase?**
+On my own projects, "green" means everything passes. Here, green was impossible —
+the codebase spans `agent/`, `api/`, `core/`, `rag/`, `ingestion/`, and `safety/`,
+and huge parts were already red. The skill I actually needed was *baselining*:
+record the exact failure set before, compare after, and prove byte-for-byte that
+my diff is neutral. I also learned to keep the blast radius tiny on purpose —
+`black` wanted to reformat ~40 lines of unrelated pre-existing code in the file I
+touched, and the right move was to *refuse* that and keep the diff to one line
+plus a comment, because mixing reformatting into a bug fix makes review harder and
+muddies the "no new failures" claim. And conventions are load-bearing:
+Conventional Commit messages with a `(agent)` scope, `Fixes #41`, Google-style
+docstrings, matching the existing `tests/unit/` fixture/mock patterns. On my own
+code I'd have skipped all of that.
+
+**How did AI tools help — and where did they fall short?**
+AI was fastest at navigation and scaffolding: grepping every consumer of the
+description field across five modules to confirm the blast radius, standing up the
+`.venv` with the pinned Python 3.11.15, scaffolding a test module that matched the
+repo's existing `@pytest.mark.unit` / mock-`httpx` patterns, and drafting the
+baseline-diff commands. Where it fell short was exactly the parts that mattered
+for the grade: judgment. It couldn't decide *for* me that the honest thing was to
+document "the crash is already guarded" rather than fake a dramatic fix; it
+couldn't decide the scope (restore `.strip()` vs. test-only); and it couldn't tell
+me to reject black's reformatting to protect the diff. Those were calls I had to
+make and defend. AI gave me leverage on the mechanical 80%; the 20% that was
+scope, honesty, and taste was on me.
+
+**What would you do differently if you started over?**
+I'd validate the issue against the actual code *during selection in Week 7*, not
+Week 8. I did flag in my Week 7 notes that the guard already existed, but I still
+committed to the issue before confirming the bug was live — which is how I ended up
+with a fix that's more "test + normalisation" than "crash fix." If I were picking
+again I'd either choose an issue whose failure I could reproduce as a genuinely
+red test first, or I'd raise the mismatch with a maintainer *before* investing, to
+confirm the scope they actually want. I'd also open the draft PR a day or two
+earlier to leave a real window for peer feedback instead of it landing near the
+deadline.
+
+**What are you most proud of?**
+The intellectual honesty of the reproduction. It would have been easy to write a
+test asserting "tool crashes," watch it fail against some contrived version, and
+claim a heroic fix. Instead I proved the real behaviour, documented that the live
+guard already prevented the crash, and scoped an honest, minimal, well-tested
+contribution — with a baseline that lets any reviewer verify in seconds that I
+made nothing worse. In a codebase that was already 53 tests and hundreds of lint
+errors in the red, shipping a change I can *prove* is neutral is the thing I'd
+stand behind.
