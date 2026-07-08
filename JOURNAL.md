@@ -19,3 +19,17 @@ I chose this issue because it is Tier 1, documentation-focused, and scoped to on
 **Setup confirmation:** [x] App runs locally at localhost:5173
 
 **Cohort ledger:** [ ] Issue added to cohort ledger
+
+## Week 8 — Reproduction & solution planning
+
+**Reproduction commit link:** https://github.com/jamespaek1/pathreview/commit/<REPRO_COMMIT_SHA>
+
+**Reproduction summary:**
+I reproduced issue #117 as a documentation gap by inspecting `docs/API.md` and confirming that it lists the local API endpoints but does not include any copy-pasteable `curl` commands. I also traced the relevant FastAPI route files to confirm the expected request formats for health, auth, profile, and review endpoints before planning the docs update.
+
+**PLAN.md link:** https://github.com/jamespaek1/pathreview/blob/docs/117-add-api-curl-examples/PLAN.md
+
+**Walkthrough video (recommended):** Not recorded yet.
+
+**Blockers or open questions:**
+I need to decide whether to include `GET /reviews/{review_id}/status`, which exists in the route code but is not currently listed in `docs/API.md`, or keep the first docs update limited to the endpoints already documented.
