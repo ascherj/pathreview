@@ -140,3 +140,62 @@ even when all optional fields (`github_username`, `portfolio_url`,
 
 **Draft PR feedback received from:** <!-- name or Discord handle, or "none" -->
 
+---
+
+## Week 10 — Iteration & Reflection
+
+### Reviewer feedback
+
+**Feedback received:** [ ] Yes  [x] No — still awaiting review
+
+**Summary of feedback:**
+[What did reviewers comment on? Or note that no review came in.]
+
+**How you responded:**
+[What changes did you make, or what did you reply? If no feedback, leave blank.]
+
+---
+
+### Reflection
+
+**What was harder than you expected?**
+Finding the relevant code was harder than the fix itself. Before I could plan
+anything I had to search the codebase to confirm where the bug actually lived and
+trace the path from the `ProfileResponse` schema to the `Profile` model to the route
+in `api/routes/profiles.py`. I expected the "hard part" to be writing the fix, but
+the actual code change ended up being a few lines. The real work was locating the
+right file and understanding how the pieces connected well enough to be sure a change
+wouldn't break something else.
+
+**What did you learn about working in a large codebase?**
+That documentation matters more than pure coding. On my own projects I mostly just
+write code, but here the fix was tiny and most of my effort went into the JOURNAL,
+the PLAN, and the PR description, plus following someone else's conventions (branch
+naming, conventional commit messages, and the pre-commit hooks). Contributing to
+someone else's production code means fitting into their standards and proving your
+change is safe, not just making it work on your machine. A good example was deciding
+to keep the existing `id` field instead of replacing it, which I only felt confident
+about after checking that the frontend reads `profile.id`.
+
+**How did AI tools help — and where did they fall short?**
+This was my first time contributing to open source, and AI was most useful as a guide
+through the parts I had never done before: the fork vs. upstream git workflow, reading
+an unfamiliar multi-service codebase quickly, and understanding why the pre-commit
+mypy hook failed when my local mypy passed. Where it fell short was the actual
+decisions. I still had to choose which issue to take, decide to keep `id` for backward
+compatibility, and judge that the pre-existing test failures were unrelated to my
+change and safe to document rather than fix. AI could surface the options, but the
+calls were mine to make.
+
+**What would you do differently if you started over?**
+I would probably take a more challenging issue. Now that I have seen how straightforward
+the overall process is once you understand the workflow, a Tier 1 fix felt very
+contained. Starting over, I would pick something closer to Tier 2 that touches more than
+one module, since the parts that intimidated me (git, conventions, reproducing the issue)
+turned out to be the manageable parts.
+
+**What are you most proud of from this module?**
+Contributing to open source for the first time. Going from never having opened a PR on
+someone else's project to a complete, standards-following contribution with tests and
+documentation is the thing I am most proud of.
+
