@@ -1,11 +1,14 @@
 """Tests for the profile API response schema.
 
-Reproduces issue #78
-(https://github.com/jamjamgobambam/pathreview/issues/78): after creating a
-profile, the response schema exposes the identifier only as ``id`` and is
-missing the ``profile_id`` field that clients need to make subsequent requests.
+Covers issue #78
+(https://github.com/jamjamgobambam/pathreview/issues/78): the profile response
+schema exposed the identifier only as ``id`` and was missing the ``profile_id``
+field that clients need to make subsequent requests. These tests assert that
+``ProfileResponse`` now exposes ``profile_id`` (mapped from ``id``) while keeping
+``id`` for backward compatibility.
 """
 
+import json
 from datetime import UTC, datetime
 from types import SimpleNamespace
 from uuid import uuid4
@@ -37,11 +40,7 @@ class TestProfileResponseSchema:
         )
 
     def test_response_includes_profile_id(self, profile_row: SimpleNamespace) -> None:
-        """The creation response must expose a ``profile_id`` field.
-
-        Currently FAILS (documents issue #78): ``ProfileResponse`` only defines
-        ``id``, so ``profile_id`` never appears in the serialized payload.
-        """
+        """The creation response must expose a ``profile_id`` field (issue #78)."""
         response = ProfileResponse.model_validate(profile_row)
         payload = response.model_dump()
 
@@ -54,4 +53,35 @@ class TestProfileResponseSchema:
         response = ProfileResponse.model_validate(profile_row)
         payload = response.model_dump()
 
-        assert payload.get("profile_id") == profile_row.id
+        assert payload["profile_id"] == profile_row.id
+        assert payload["profile_id"] == payload["id"]
+
+    def test_id_field_still_present(self, profile_row: SimpleNamespace) -> None:
+        """``id`` must remain in the payload so existing clients don't break."""
+        response = ProfileResponse.model_validate(profile_row)
+        payload = response.model_dump()
+
+        assert payload["id"] == profile_row.id
+
+    def test_profile_id_serializes_as_uuid_string(self, profile_row: SimpleNamespace) -> None:
+        """``profile_id`` must serialize to the same UUID string as ``id``."""
+        response = ProfileResponse.model_validate(profile_row)
+        payload = json.loads(response.model_dump_json())
+
+        assert payload["profile_id"] == str(profile_row.id)
+        assert payload["profile_id"] == payload["id"]
+
+    def test_profile_id_present_when_optional_fields_missing(self) -> None:
+        """``profile_id`` is returned even when optional fields are ``None``."""
+        row = SimpleNamespace(
+            id=uuid4(),
+            user_id=uuid4(),
+            github_username=None,
+            portfolio_url=None,
+            created_at=datetime.now(UTC),
+            resume_filename=None,
+        )
+
+        payload = ProfileResponse.model_validate(row).model_dump()
+
+        assert payload["profile_id"] == row.id
