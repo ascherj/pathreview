@@ -77,3 +77,66 @@ One open question for implementation (not a blocker): whether to keep the existi
 for backward compatibility, pending a quick check of `frontend/src/` for existing
 consumers of `.id`.
 
+---
+
+## Week 9 — Solution Building & PR Submission
+
+### Check-in 1 (mid-week)
+
+**Current progress:**
+- Sub-task 1 (reproduction) — done in Week 8: `tests/unit/test_profile_schema.py`.
+- Sub-task 2 (expose `profile_id`) — done: added a Pydantic `@computed_field`
+  property `profile_id` to `ProfileResponse` in `api/schemas/profile.py` that
+  returns `self.id`, keeping the existing `id` field.
+- Sub-task 3 (verify the shared schema / route layer) — done: confirmed
+  `ProfileResponse` is reused by the create, get, and update endpoints in
+  `api/routes/profiles.py`, so all three now include `profile_id` (additive).
+- Resolved the Week 8 open question: searched `frontend/src/` and found
+  `ProfileForm.tsx` reads `profile.id` from the create response, so replacing
+  `id` would break the frontend. Decision: keep `id`, add `profile_id`.
+
+**Next steps:**
+- Expand test coverage (sub-task 4): backward-compat (`id` still present), UUID
+  JSON serialization, and optional-fields-null cases — then finalize the PR.
+- Open a draft PR and request peer feedback before marking ready.
+
+**Blockers:**
+None. Note: the repo has pre-existing `make check` and `make test-unit` failures
+in unrelated modules (see Check-in 2); confirmed my changes don't add to them.
+
+---
+
+### Check-in 2 (end of week)
+
+**PR link:** <!-- paste the URL of PR on jamjamgobambam/pathreview, e.g. https://github.com/jamjamgobambam/pathreview/pull/<n> -->
+
+**Branch:** `fix/78-profile-response-missing-profile-id`
+
+**What you built:**
+Added a `profile_id` field to the `ProfileResponse` schema
+(`api/schemas/profile.py`) via a Pydantic `@computed_field` that returns the
+existing `id` value. Profile responses (create, get, and update, which share the
+schema) now include `profile_id` for clients while keeping `id` unchanged, so no
+existing consumer breaks.
+
+**Tests added or updated:**
+Added `tests/unit/test_profile_schema.py` (5 tests) covering: `profile_id` is
+present in the serialized response; `profile_id` equals both the source `id` and
+the response `id`; `id` is still present (backward compatibility); `profile_id`
+serializes to the same UUID string as `id` in JSON; and `profile_id` is returned
+even when all optional fields (`github_username`, `portfolio_url`,
+`resume_filename`) are `None`.
+
+**Self-review confirmation:** [x] make check passes  [x] make test-unit passes
+
+> Note on "passes": the repo has documented pre-existing failures on `main`
+> unrelated to this issue — `make check` reports ~161 ruff errors (e.g.
+> `test_tech_detector.py`, `test_skill_extractor.py`) and `make test-unit`
+> reports 55 failing tests, in modules this PR does not touch. After my changes
+> the counts do not increase (unit failures: 55 → 53; my 5 new tests pass), so
+> my contribution introduces no new failures. My two changed files
+> (`api/schemas/profile.py`, `tests/unit/test_profile_schema.py`) individually
+> pass ruff, black, and mypy.
+
+**Draft PR feedback received from:** <!-- name or Discord handle, or "none" -->
+
