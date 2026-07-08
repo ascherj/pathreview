@@ -1,32 +1,58 @@
-"""Reproduction for issue #106 — missing shared `sample_user_profile` fixture.
+"""Verification test for the shared ``sample_user_profile`` fixture (issue #106).
 
 https://github.com/jamjamgobambam/pathreview/issues/106
 
-This test documents the gap: there is no shared `sample_user_profile` fixture
-in `tests/conftest.py` (nor a `tests/fixtures/` directory). Running this test
-therefore fails at collection/setup with:
-
-    E       fixture 'sample_user_profile' not found
-
-Once the fixture is added in the Week 9 fix, this test should pass by asserting
-the fixture exposes the fields defined on `core.models.profile.Profile`.
+Originally this test reproduced the gap — requesting the fixture raised
+``fixture 'sample_user_profile' not found``. Now that the fixture exists in
+``tests/conftest.py``, this test verifies it exposes every field defined on
+``core.models.profile.Profile`` with the correct, non-null types.
 """
 
-from typing import Any
+from datetime import datetime
+from uuid import UUID
 
 import pytest
 
+from core.models.profile import Profile
+
+PROFILE_FIELDS = (
+    "id",
+    "user_id",
+    "github_username",
+    "resume_filename",
+    "resume_text",
+    "portfolio_url",
+    "created_at",
+    "updated_at",
+)
+
 
 @pytest.mark.unit
-def test_sample_user_profile_fixture_is_available(sample_user_profile: Any) -> None:
-    """A shared sample user profile fixture should exist and expose Profile fields."""
-    # These are the fields defined on core/models/profile.py::Profile.
-    for field in (
-        "id",
-        "user_id",
-        "github_username",
-        "resume_filename",
-        "resume_text",
-        "portfolio_url",
-    ):
-        assert hasattr(sample_user_profile, field) or field in sample_user_profile
+def test_sample_user_profile_is_a_profile_instance(sample_user_profile: Profile) -> None:
+    """The fixture returns a ``Profile`` model instance."""
+    assert isinstance(sample_user_profile, Profile)
+
+
+@pytest.mark.unit
+def test_sample_user_profile_exposes_all_fields(sample_user_profile: Profile) -> None:
+    """Every column defined on ``Profile`` is present and populated (non-null)."""
+    for field in PROFILE_FIELDS:
+        assert hasattr(sample_user_profile, field), f"missing field: {field}"
+        assert getattr(sample_user_profile, field) is not None, f"null field: {field}"
+
+
+@pytest.mark.unit
+def test_sample_user_profile_ids_are_valid_uuids(sample_user_profile: Profile) -> None:
+    """``id`` and ``user_id`` are valid UUID strings (matching the model column)."""
+    UUID(sample_user_profile.id)
+    UUID(sample_user_profile.user_id)
+
+
+@pytest.mark.unit
+def test_sample_user_profile_timestamps_are_timezone_aware(
+    sample_user_profile: Profile,
+) -> None:
+    """``created_at``/``updated_at`` are timezone-aware datetimes."""
+    for ts in (sample_user_profile.created_at, sample_user_profile.updated_at):
+        assert isinstance(ts, datetime)
+        assert ts.tzinfo is not None
