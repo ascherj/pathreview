@@ -42,3 +42,26 @@ then `make setup`, confirm http://localhost:5173, and check this box. -->
 
 **Cohort ledger:** [ ] Issue added to cohort ledger
 <!-- To be completed from my GitHub account using the instructor-provided ledger link. -->
+
+## Week 8 — Reproduction & solution planning
+
+**Reproduction commit link:** https://github.com/sravanibhamidipaty/pathreview/commit/40761cc6a4243ed83c4bf3cbe91192496f449cbb
+
+**Reproduction summary:**
+I added a unit test (`tests/unit/test_sample_user_profile_fixture.py`) that
+requests a `sample_user_profile` fixture and ran it with `pytest`. It fails at
+setup with `fixture 'sample_user_profile' not found`, and the reported available
+fixtures list shows only `sample_readme_text` and `sample_resume_text` — proving
+the shared profile fixture is genuinely missing from `tests/conftest.py`.
+
+**PLAN.md link:** https://github.com/sravanibhamidipaty/pathreview/blob/test/106-sample-user-profile-fixture/PLAN.md
+
+**Walkthrough video (recommended):** _(not recorded)_
+
+**Blockers or open questions:**
+Open question for the maintainer: the issue title says the fixture should live in
+`tests/fixtures/`, but the existing sample fixtures (`sample_resume_text`,
+`sample_readme_text`) live in `tests/conftest.py`. I plan to follow the current
+`conftest.py` convention and confirm in the PR. Also deciding whether the fixture
+should return a transient `Profile` ORM instance vs. a plain dict — leaning toward
+the `Profile` instance for production parity.
