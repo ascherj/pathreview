@@ -51,3 +51,29 @@ existing behavior intact. This is scoped to the API layer, primarily the
 - *Estimated Effort*: The issue is estimated at 1–2 hours, plus time for writing tests, which makes it achievable before the Week 9 deadline.
 - *Blockers or Dependencies*: No blockers or external dependencies are mentioned in the issue.
 - *Claim Status*: I commented on the issue to claim it. The cohort ledger entry is still pending because I am waiting for the ledger link, and I will complete it before starting Week 8.
+
+---
+
+## Week 8 — Reproduction & Solution Planning
+
+**Reproduction commit link:** https://github.com/sehr-abrar/pathreview/commit/35edb900b56be115e46fc8ac91c9386f707a0d56
+
+
+**Reproduction summary:**
+I reproduced the issue with a new failing test, `tests/unit/test_profile_schema.py`,
+which validates a Profile-like object through `ProfileResponse` and asserts the
+serialized payload contains a `profile_id` field. Running
+`pytest tests/unit/test_profile_schema.py` fails with
+`AssertionError: ProfileResponse is missing the 'profile_id' field (issue #78)`,
+and the dumped payload confirms the response contains `id` but no `profile_id`.
+
+**PLAN.md link:** https://github.com/sehr-abrar/pathreview/blob/fix/78-profile-response-missing-profile-id/PLAN.md
+
+**Walkthrough video (recommended):** N/A — not recorded.
+
+**Blockers or open questions:**
+One open question for implementation (not a blocker): whether to keep the existing
+`id` field alongside the new `profile_id` or replace it. My current plan keeps both
+for backward compatibility, pending a quick check of `frontend/src/` for existing
+consumers of `.id`.
+
