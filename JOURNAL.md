@@ -19,3 +19,49 @@ I selected Issue #108 after carefully evaluating several Tier 1 issues. I first 
 **Setup confirmation:** [x] App runs locally at localhost:5173
 
 **Cohort ledger:** [x] Issue added to cohort ledger
+
+## Week 8 — Reproduction & solution planning
+
+**Reproduction commit link:** https://github.com/AddreeBarua/pathreview/commit/f6ac40c
+
+**Reproduction summary:**
+Ran `.venv/bin/pytest tests/unit/test_llm_provider_contract.py -v` → 27 passed, then confirmed by reading the file that no test compares the mock provider's output structure against the real OpenAI provider's — the only real-provider coverage is a `hasattr` check, so all tests stay green even if the formats diverge. The reproduction is documented in PLAN.md (committed in f6ac40c).
+
+**PLAN.md link:** https://github.com/AddreeBarua/pathreview/blob/test/108-mock-llm-provider-contract/PLAN.md
+
+**Walkthrough video (recommended):** Not recorded.
+
+**Blockers or open questions:**
+None.
+
+## Week 9 — Solution building & PR submission
+
+### Check-in 1 (mid-week)
+
+**Current progress:**
+PLAN.md sub-tasks 1–3 complete: added the mocked-OpenAI fixture and the `TestProviderContractParity` class (7 tests) to `tests/unit/test_llm_provider_contract.py`. All 34 tests pass locally (27 existing + 7 new).
+
+**Next steps:**
+Run the linter/formatter/type checker on changed files, resolve pre-commit hook findings, and open the PR.
+
+**Blockers:**
+The strict mypy pre-commit hook required type annotations on every function in the touched files, including the 27 pre-existing tests — resolved by annotating the whole module.
+
+---
+
+### Check-in 2 (end of week)
+
+**PR link:** https://github.com/jamjamgobambam/pathreview/pull/136
+
+**Branch:** test/108-mock-llm-provider-contract
+
+**What you built:**
+A `TestProviderContractParity` test class that mocks the OpenAI client (patched at `openai.OpenAI`, response shaped like the real SDK) so `OpenAIEmbeddingProvider.embed()` can run offline, then asserts both providers return identically structured responses: list type, one vector per input, lists of floats, matching 1536 dimensionality, empty-input handling, batch consistency, and factory return types.
+
+**Tests added or updated:**
+`tests/unit/test_llm_provider_contract.py` — 7 new contract parity tests; type annotations added across the module. `ingestion/embeddings/provider.py` — annotation and exception-chaining fixes required by the pre-commit hooks.
+
+**Self-review confirmation:** [x] make check passes  [x] make test-unit passes
+(In a codebase with documented pre-existing failures: my changed files pass ruff/black/mypy via the pre-commit hooks, and `make test-unit` shows the same 53 pre-existing failures on `main` and my branch — verified by running the suite on both — with 7 new passes and no new failures from my change.)
+
+**Draft PR feedback received from:** none
