@@ -18,4 +18,4 @@ I selected Issue #108 after carefully evaluating several Tier 1 issues. I first 
 
 **Setup confirmation:** [x] App runs locally at localhost:5173
 
-**Cohort ledger:** [ ] Issue added to cohort ledger
+**Cohort ledger:** [x] Issue added to cohort ledger
