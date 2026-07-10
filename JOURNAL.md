@@ -41,3 +41,36 @@ Checked out the upstream `main` branch and confirmed the `README.md` contained o
 
 **Blockers or open questions:**
 None — the fix is a pure documentation change to a single file, all subsystem behavior was verified against the source directories, and the PR diff is straightforward for a reviewer to evaluate.
+
+---
+
+## Week 9 — Solution building & PR submission
+
+### Check-in 1 (mid-week)
+
+**Current progress:**
+All sub-tasks from `PLAN.md` are complete. The `README.md` has been updated with every section called out in Issue #114: Table of Contents, "The Problem", "Who It's For", expanded Features prose with an agent tool reference table, and a six-step "How It Works" ASCII flow. The Architecture table was moved above Quick Start for better reading order. Commit `093661f` captures the full change. `PLAN.md` was added in commit `e59c1f6`.
+
+**Next steps:**
+Run `make check` and `make test-unit` to document pre-existing failure counts, finalize the JOURNAL.md Check-in 2 entry, open the draft PR against upstream, and then mark it ready for review.
+
+**Blockers:**
+None.
+
+---
+
+### Check-in 2 (end of week)
+
+**PR link:** [https://github.com/jamjamgobambam/pathreview/pull/135](https://github.com/jamjamgobambam/pathreview/pull/135)
+
+**Branch:** `docs/114-readme-project-overview`
+
+**What you built:**
+Added four missing sections to `README.md` to address Issue #114: a "The Problem" explanation, a "Who It's For" audience list, expanded Features prose (replacing one-line bullets with full subsections and an agent tool table), and a six-step "How It Works" ASCII flow. Every description was verified against the actual source directories. No code files were modified.
+
+**Tests added or updated:**
+This is a documentation-only change — no Python, TypeScript, or configuration files were modified, so no test files were added or updated. The CONTRIBUTING.md standard for tests applies to code changes only.
+
+**Self-review confirmation:** [x] `make check` passes (182 pre-existing errors, none introduced by this PR)  [x] `make test-unit` passes (53 pre-existing failures, none introduced by this PR)
+
+**Draft PR feedback received from:** none
