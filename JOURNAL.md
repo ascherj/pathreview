@@ -25,3 +25,19 @@ The project README contained only setup instructions and a minimal feature bulle
 **Setup confirmation:** [x] App runs locally at localhost:5173
 
 **Cohort ledger:** [ ] Issue added to cohort ledger
+
+---
+
+## Week 8 — Reproduction & solution planning
+
+**Reproduction commit link:** [093661f — docs: add project overview, problem statement, and feature details to README](https://github.com/BrandenBedoya/pathreview/commit/093661f)
+
+**Reproduction summary:**
+Checked out the upstream `main` branch and confirmed the `README.md` contained only a minimal feature bullet list, a bare architecture table, and Quick Start instructions — no "The Problem" section, no "Who It's For" section, no expanded feature descriptions, and no "How It Works" flow. The reproduction is documented through the diff of commit `093661f`, which shows exactly what was missing: four sections and all supporting prose that give new readers the orientation the issue describes.
+
+**PLAN.md link:** [PLAN.md](https://github.com/BrandenBedoya/pathreview/blob/docs/114-readme-project-overview/PLAN.md)
+
+**Walkthrough video (recommended):** *(not recorded)*
+
+**Blockers or open questions:**
+None — the fix is a pure documentation change to a single file, all subsystem behavior was verified against the source directories, and the PR diff is straightforward for a reviewer to evaluate.
