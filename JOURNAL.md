@@ -74,3 +74,36 @@ This is a documentation-only change — no Python, TypeScript, or configuration 
 **Self-review confirmation:** [x] `make check` passes (182 pre-existing errors, none introduced by this PR)  [x] `make test-unit` passes (53 pre-existing failures, none introduced by this PR)
 
 **Draft PR feedback received from:** none
+
+---
+
+## Week 10 — Iteration & reflection
+
+### Reviewer feedback
+
+**Feedback received:** [ ] Yes  [x] No — still awaiting review
+
+**Summary of feedback:**
+PR #135 was opened against `jamjamgobambam/pathreview` on the final day of Week 9. As of the end of Week 10, no human maintainer has reviewed the PR. The GitHub Copilot auto-reviewer was triggered when the PR was marked ready for review, but no substantive comments were posted. The PR remains open with one participant (myself).
+
+**How you responded:**
+No response was required — no feedback arrived. The PR is left open in its submitted state. If a review comes in after the module closes, I would address any inline comments, push a fixup commit, and reply directly on the thread.
+
+---
+
+### Reflection
+
+**What was harder than you expected?**
+Accurately describing a codebase I didn't write was harder than I anticipated. A documentation-only change sounds low-effort, but every claim in the README had to be traceable to actual source files. For the "How It Works" flow and the agent tool table I had to read through `agent/tools/`, `safety/`, and `rag/` carefully enough to describe what each piece does — not just what its name implies. One pass through the directories was never enough; I kept catching small inaccuracies (e.g., the order of safety stages, the exact names of the RAG retrieval modes) that would have been embarrassing in a production README. That verification loop took longer than the writing itself.
+
+**What did you learn about working in a large codebase?**
+The biggest difference from solo projects is that the codebase has a history and a set of implicit conventions you can't see in the files alone. I had to read CONTRIBUTING.md, open issues, and closed PRs before I understood what the maintainer actually wanted — the issue title alone wasn't enough. I also learned that "no code changed" doesn't mean "no risk": moving the Architecture table above Quick Start required me to understand why it was placed where it was in the first place, and I had to make a judgment call that could easily have been overruled by a reviewer with more context. Contributing to someone else's production repo means accepting that your judgment is provisional until a maintainer weighs in.
+
+**How did AI tools help — and where did they fall short?**
+AI was most useful for two things: drafting prose quickly once I had the raw facts assembled, and structuring sections (e.g., suggesting the Table of Contents format and the ASCII flow diagram layout). It saved probably an hour of staring at a blank page. Where it fell short was in accuracy — AI confidently described features based on naming patterns rather than actual code behavior, and I had to manually verify or discard nearly everything it generated about specific subsystems. For a documentation task in a repo the AI hadn't "read," every factual claim needed a human spot-check. AI is a good first draft, not a reliable source of truth.
+
+**What would you do differently if you started over?**
+I would pick a Tier 2 issue that required a code change. A documentation-only PR is safe and completable, but it doesn't give you the experience of navigating a test suite, understanding module imports, or getting linter errors from an unfamiliar codebase. Those friction points are where the real learning happens. I chose Tier 1 partly because it felt achievable in the time window — but achievable isn't the same as educational. The pre-existing 182 linting errors and 53 test failures were easy to document and ignore; I never had to understand why they existed, which means I left with less codebase knowledge than I could have gained.
+
+**What are you most proud of from this module?**
+The accuracy of the final README. Every subsystem description — the five agent tools, the four safety stages, the hybrid retrieval pipeline — was verified against the actual source directories before it went into the PR. It would have been easy to write plausible-sounding descriptions and hope a reviewer caught any errors. Instead I read the code first and wrote second. The PR diff represents what PathReview actually does, not what I assumed it did from the issue title.
