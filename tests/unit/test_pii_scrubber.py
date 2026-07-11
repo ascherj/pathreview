@@ -203,6 +203,17 @@ class TestPIIScrubber:
             scrubbed = scrubber.scrub(text)
             # Should attempt to redact addresses
 
+    @pytest.mark.parametrize(
+        "address",
+        [
+            "456 West 42nd Street",
+            "789 N. Oak Avenue",
+        ],
+    )
+    def test_common_street_address_formats_are_fully_redacted(self, scrubber, address):
+        """Reproduce incomplete redaction of common US street addresses."""
+        assert scrubber.scrub(address) == "[REDACTED]"
+
     def test_empty_text(self, scrubber):
         """Test with empty text."""
         text = ""
