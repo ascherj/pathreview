@@ -86,7 +86,7 @@ class TestPIIScrubber:
         text = "Address: 123 Main Street, Apt 4"
         scrubbed = scrubber.scrub(text)
 
-        assert "[REDACTED]" in scrubbed or "123" not in scrubbed
+        assert scrubbed == "Address: [REDACTED], Apt 4"
 
     def test_text_with_no_pii(self, scrubber):
         """Test text with no PII is returned unchanged."""
@@ -201,7 +201,7 @@ class TestPIIScrubber:
         for addr in addresses:
             text = f"Address: {addr}"
             scrubbed = scrubber.scrub(text)
-            # Should attempt to redact addresses
+            assert scrubbed == "Address: [REDACTED]"
 
     @pytest.mark.parametrize(
         "address",
@@ -211,8 +211,25 @@ class TestPIIScrubber:
         ],
     )
     def test_common_street_address_formats_are_fully_redacted(self, scrubber, address):
-        """Reproduce incomplete redaction of common US street addresses."""
+        """Test numbered streets and dotted directionals are fully redacted."""
         assert scrubber.scrub(address) == "[REDACTED]"
+
+        detections = scrubber.detect(address)
+        assert detections == [
+            {
+                "type": "street_address",
+                "value": address,
+                "start": 0,
+                "end": len(address),
+            }
+        ]
+
+    def test_street_address_pattern_does_not_redact_resume_prose(self, scrubber):
+        """Test short street suffixes do not match inside ordinary words."""
+        text = "I worked for 5 years developing Python applications."
+
+        assert scrubber.scrub(text) == text
+        assert not any(item["type"] == "street_address" for item in scrubber.detect(text))
 
     def test_empty_text(self, scrubber):
         """Test with empty text."""
@@ -263,3 +280,4 @@ class TestPIIScrubber:
 
         # Should be minimal or no detections
         # (version number shouldn't be flagged as SSN)
+        assert detected == []
