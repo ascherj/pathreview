@@ -4,7 +4,7 @@
 
 **Issue link:** https://github.com/jamjamgobambam/pathreview/issues/108
 
-**Claim comment:** https://github.com/jamjamgobambam/pathreview/issues/108#issuecomment (my comment claiming the issue, posted before starting work)
+**Claim comment:** https://github.com/jamjamgobambam/pathreview/issues/108#issuecomment-4938550638 (my comment claiming the issue, posted before starting work)
 
 **Issue title:** No test verifies that the mock LLM provider returns responses in the expected format
 
