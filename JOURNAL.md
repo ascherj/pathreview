@@ -4,6 +4,8 @@
 
 **Issue link:** https://github.com/jamjamgobambam/pathreview/issues/108
 
+**Claim comment:** https://github.com/jamjamgobambam/pathreview/issues/108#issuecomment (my comment claiming the issue, posted before starting work)
+
 **Issue title:** No test verifies that the mock LLM provider returns responses in the expected format
 
 **Tier:** [x] Tier 1  [ ] Tier 2  [ ] Tier 3
@@ -18,7 +20,7 @@ I selected Issue #108 after carefully evaluating several Tier 1 issues. I first 
 
 **Setup confirmation:** [x] App runs locally at localhost:5173
 
-**Cohort ledger:** [x] Issue added to cohort ledger
+**Cohort ledger:** [ ] Issue added to cohort ledger
 
 ## Week 8 — Reproduction & solution planning
 
