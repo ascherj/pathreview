@@ -82,6 +82,36 @@ jobs:
           REDIS_URL: redis://localhost:6379/0
           LLM_PROVIDER: mock
 
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - run: pip install pip-audit
+      - name: Audit Python dependencies
+        run: pip-audit --format=json --output pip-audit-report.json || true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - name: Audit Node.js dependencies
+        run: npm audit --json > npm-audit-report.json || true
+        working-directory: frontend
+      - name: Upload audit reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-reports
+          path: |
+            pip-audit-report.json
+            frontend/npm-audit-report.json
+
   frontend:
     runs-on: ubuntu-latest
     steps:
@@ -91,6 +121,8 @@ jobs:
           node-version: "18"
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - run: cd frontend && npm ci
+      - run: npm ci
+        working-directory: frontend
       - name: Frontend lint and tests
-        run: cd frontend && npm test -- --run
+        run: npm test -- --run
+        working-directory: frontend
