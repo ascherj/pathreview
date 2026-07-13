@@ -22,7 +22,7 @@ I chose this issue because it is Tier 1, documentation-focused, and scoped to on
 
 ## Week 8 — Reproduction & solution planning
 
-**Reproduction commit link:** https://github.com/jamespaek1/pathreview/commit/<REPRO_COMMIT_SHA>
+**Reproduction commit link:** https://github.com/jamespaek1/pathreview/commit/77b7e515ab14ddee9695bb3f0117a5b2a10e03ae
 
 **Reproduction summary:**
 I reproduced issue #117 as a documentation gap by inspecting `docs/API.md` and confirming that it lists the local API endpoints but does not include any copy-pasteable `curl` commands. I also traced the relevant FastAPI route files to confirm the expected request formats for health, auth, profile, and review endpoints before planning the docs update.
