@@ -26,6 +26,9 @@ class TestApiDocsRequestSchemas:
         assert "resume_file" in content
         assert "PDF" in content
         assert "Markdown" in content
+        assert "application/pdf" in content
+        assert "text/markdown" in content
+        assert "text/plain" in content
 
     def test_api_md_documents_post_reviews_json_profile_id(self) -> None:
         """POST /reviews section documents JSON body with required profile_id UUID."""

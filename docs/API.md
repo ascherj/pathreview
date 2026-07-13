@@ -29,7 +29,7 @@ Authenticated endpoints require a JWT from `POST /auth/login` (or `POST /auth/re
 |-------|------|----------|-------------|
 | `github_username` | string | no | GitHub username (max 255 characters) |
 | `portfolio_url` | string | no | Portfolio URL (max 500 characters) |
-| `resume_file` | file | no | Resume upload; must be PDF or Markdown (`application/pdf`, `text/markdown`, or `text/plain`). Other types return **422**. |
+| `resume_file` | file | no | Resume upload; must be PDF, Markdown, or plain text (`application/pdf`, `text/markdown`, or `text/plain`). Other types return **422**. |
 
 All fields are optional; an empty multipart body is a valid create request.
 
