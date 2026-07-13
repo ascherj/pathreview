@@ -36,3 +36,36 @@ Opened local `docs/API.md` on branch `docs/89-api-profiles-request-schema`. Unde
 
 **Blockers or open questions:**
 Document `POST /profiles` as multipart Form/File (not JSON) per `api/routes/profiles.py`; verify wording against OpenAPI during Week 9 implementation.
+
+## Week 9 — Solution building & PR submission
+
+### Check-in 1 (mid-week)
+
+**Current progress:**
+Completed PLAN.md sub-tasks 1–4: added `POST /profiles` (`multipart/form-data`: `github_username`, `portfolio_url`, `resume_file`) and `POST /reviews` (`application/json` with required `profile_id`) request body sections to `docs/API.md`, including field descriptions, optionality, resume MIME → 422 note, JWT auth callout, and example values aligned with `api/routes/profiles.py` / `ReviewCreate`.
+
+**Next steps:**
+Add `tests/unit/test_api_docs.py` parity checks, run `make check` / `make test-unit`, walk the pre-submission self-review checklist, open the PR against upstream, and fill Check-in 2 with the PR link.
+
+**Blockers:**
+None.
+
+---
+
+### Check-in 2 (end of week)
+
+**PR link:** (filled after PR opens)
+
+**Branch:** `docs/89-api-profiles-request-schema`
+
+**What you built:**
+Updated `docs/API.md` so API consumers can construct valid `POST /profiles` (multipart Form/File) and `POST /reviews` (JSON `profile_id`) requests without reading FastAPI sources. Added a unit test that guards those request-body docs against regressions.
+
+**Tests added or updated:**
+`tests/unit/test_api_docs.py` — asserts `docs/API.md` documents multipart fields for profiles (including PDF/Markdown resume constraint) and JSON `profile_id` with example UUID for reviews.
+
+**Self-review confirmation:** [x] make check passes  [x] make test-unit passes
+
+**Draft PR feedback received from:** none
+
+Note: `make check` / `make test-unit` report many pre-existing failures elsewhere in the repo (e.g. ruff F841 in unrelated unit tests; 53 failing unit tests in modules we did not touch). Our changes introduce no new failures — `ruff`/`black` clean on `tests/unit/test_api_docs.py`, and `pytest tests/unit/test_api_docs.py -v` passes (2/2).
