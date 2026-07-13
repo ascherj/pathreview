@@ -1,5 +1,7 @@
 # PathReview
 
+**AI-powered portfolio review assistant** that helps early-career developers strengthen their professional portfolios.
+
 PathReview analyzes GitHub profiles, resumes, and project repositories to generate structured, actionable feedback on portfolio completeness, project quality, skill gaps, and presentation improvements.
 
 ## Features
