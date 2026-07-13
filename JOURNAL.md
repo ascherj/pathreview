@@ -27,14 +27,12 @@
 
 ## Week 8 — Reproduction & solution planning
 
-**Reproduction commit link:** (filled after push)
+**Reproduction commit link:** https://github.com/ethanncyb/pathreview/commit/3bb64d85a7f75af65a7b4c99d057bc82abf9d396
 
 **Reproduction summary:**
 Opened local `docs/API.md` on branch `docs/89-api-profiles-request-schema`. Under Profiles and Reviews, only one-line endpoint summaries exist — no request body field tables, types, descriptions, or example values for `POST /profiles` or `POST /reviews`. Confirmed the live API at `http://localhost:8000/docs` / OpenAPI does expose request bodies (`multipart/form-data` for profiles, `application/json` ReviewCreate for reviews), so the gap is documentation-only and still present.
 
-**PLAN.md link:** (filled after PLAN.md exists)
-
-**Walkthrough video (recommended):**
+**PLAN.md link:** https://github.com/ethanncyb/pathreview/blob/docs/89-api-profiles-request-schema/PLAN.md
 
 **Blockers or open questions:**
-Need to decide how to document `POST /profiles` accurately — the route uses multipart `Form`/`File` fields (`github_username`, `portfolio_url`, `resume_file`), not a pure JSON `ProfileCreate` body. Will capture that in PLAN.md and verify against OpenAPI during Week 9.
+Document `POST /profiles` as multipart Form/File (not JSON) per `api/routes/profiles.py`; verify wording against OpenAPI during Week 9 implementation.
