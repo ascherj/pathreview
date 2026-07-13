@@ -54,7 +54,7 @@ None.
 
 ### Check-in 2 (end of week)
 
-**PR link:** (filled after PR opens)
+**PR link:** https://github.com/jamjamgobambam/pathreview/pull/145
 
 **Branch:** `docs/89-api-profiles-request-schema`
 
