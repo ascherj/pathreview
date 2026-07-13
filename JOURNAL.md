@@ -24,3 +24,17 @@
 - **Gap confirmed:** Current `docs/API.md` only has one-line endpoint summaries; request body schemas for `POST /profiles` and `POST /reviews` are missing (issue body matches the file).
 - **Not picking popular stubs that are already claimed or already fixed** (e.g. CONTRIBUTING commit convention, ProfileForm loading tests, readme_scorer unit tests).
 - **Claimed on GitHub:** Comment left on issue #89 stating intent and branch name.
+
+## Week 8 — Reproduction & solution planning
+
+**Reproduction commit link:** (filled after push)
+
+**Reproduction summary:**
+Opened local `docs/API.md` on branch `docs/89-api-profiles-request-schema`. Under Profiles and Reviews, only one-line endpoint summaries exist — no request body field tables, types, descriptions, or example values for `POST /profiles` or `POST /reviews`. Confirmed the live API at `http://localhost:8000/docs` / OpenAPI does expose request bodies (`multipart/form-data` for profiles, `application/json` ReviewCreate for reviews), so the gap is documentation-only and still present.
+
+**PLAN.md link:** (filled after PLAN.md exists)
+
+**Walkthrough video (recommended):**
+
+**Blockers or open questions:**
+Need to decide how to document `POST /profiles` accurately — the route uses multipart `Form`/`File` fields (`github_username`, `portfolio_url`, `resume_file`), not a pure JSON `ProfileCreate` body. Will capture that in PLAN.md and verify against OpenAPI during Week 9.
