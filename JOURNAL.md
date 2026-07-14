@@ -57,16 +57,21 @@ None currently.
 
 ### Check-in 2 (end of week)
 
-**PR link:** [add final PR link]
+**PR link:** https://github.com/jamjamgobambam/pathreview/pull/131
 
 **Branch:** `docs/117-add-api-curl-examples`
 
 **What you built:**
-[Complete before submission.]
+I expanded `docs/API.md` with copy-pasteable `curl` examples for the documented
+health, authentication, profile, and review endpoints. The examples explain
+the correct JSON, form-encoded, multipart, and bearer-authentication formats
+and show how to reuse returned profile and review IDs.
 
 **Tests added or updated:**
-[Complete before submission.]
+No automated test files were changed because this is a documentation-only
+contribution. I manually ran the documented commands against the local API and
+ran the repository's existing `make check` and `make test-unit` commands.
 
-**Self-review confirmation:** [ ] make check passes  [ ] make test-unit passes
+**Self-review confirmation:** [x] make check passes  [x] make test-unit passes
 
-**Draft PR feedback received from:** [name, Discord handle, or "none"]
+**Draft PR feedback received from:** [reviewer's name or Discord handle]
