@@ -33,3 +33,40 @@ I reproduced issue #117 as a documentation gap by inspecting `docs/API.md` and c
 
 **Blockers or open questions:**
 I need to decide whether to include `GET /reviews/{review_id}/status`, which exists in the route code but is not currently listed in `docs/API.md`, or keep the first docs update limited to the endpoints already documented.
+
+## Week 9 — Solution building & PR submission
+
+### Check-in 1 (mid-week)
+
+**Current progress:**
+I implemented the main documentation update in `docs/API.md`. The API reference
+now includes copy-pasteable `curl` examples for health checks, registration,
+login, profile creation/retrieval/deletion, and review creation/retrieval/listing.
+I also documented the required content types, bearer-token header, and reusable
+profile and review ID placeholders.
+
+**Next steps:**
+I will run every example against the local API, run `make check` and
+`make test-unit`, request feedback on the existing pull request, and make any
+clarifications identified during testing or review.
+
+**Blockers:**
+None currently.
+
+---
+
+### Check-in 2 (end of week)
+
+**PR link:** [add final PR link]
+
+**Branch:** `docs/117-add-api-curl-examples`
+
+**What you built:**
+[Complete before submission.]
+
+**Tests added or updated:**
+[Complete before submission.]
+
+**Self-review confirmation:** [ ] make check passes  [ ] make test-unit passes
+
+**Draft PR feedback received from:** [name, Discord handle, or "none"]
