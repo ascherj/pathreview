@@ -108,7 +108,7 @@ in unrelated modules (see Check-in 2); confirmed my changes don't add to them.
 
 ### Check-in 2 (end of week)
 
-**PR link:** <!-- paste the URL of PR on jamjamgobambam/pathreview, e.g. https://github.com/jamjamgobambam/pathreview/pull/<n> -->
+**PR link:** https://github.com/jamjamgobambam/pathreview/pull/144
 
 **Branch:** `fix/78-profile-response-missing-profile-id`
 
