@@ -39,6 +39,11 @@ async def create_review_endpoint(
             user_id=current_user.id,
         )
 
+        if review is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Profile not found",
+            )
         # Add background task for processing
         background_tasks.add_task(process_review, db, review.id, data.profile_id)
 
