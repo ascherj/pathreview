@@ -33,9 +33,17 @@ because the code is actually producing a mid-range partial score.
 **Branch name:** test/157-relevance-scorer-partial-overlap
 
 **Setup confirmation:** [ ] App runs locally at localhost:5173
-> Pending: Docker Desktop must be running before `docker compose up -d` and
-> `make setup`. `.env.example` defaults `LLM_PROVIDER=mock`, so no API key is
-> required for local development — just `cp .env.example .env`.
+> Python environment is fully set up and verified: `make setup` installed all
+> backend dependencies into `.venv`, and the unit-test suite runs
+> (`.venv/bin/pytest tests/unit`). I reproduced this issue's failing test
+> directly — `pytest tests/unit/test_relevance_scorer.py::TestRelevanceScorer::test_query_with_partial_overlap`
+> fails with `assert 1.0 < 0.9`, confirming the environment works for the fix.
+>
+> The full web app at localhost:5173 requires the Docker-hosted Postgres/Redis/
+> ChromaDB services, which I have not launched. This issue is a unit-test-only
+> fix — its PR gate (`make check && make test-unit`) needs no database — so the
+> containerized app is not required for the work. Box left unchecked rather than
+> attesting to something not verified.
 
 **Cohort ledger:** [ ] Issue added to cohort ledger
 > Pending: add name, GitHub username (TaoTDM), and issue #157 to the Section 1A
