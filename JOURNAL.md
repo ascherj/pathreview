@@ -50,6 +50,55 @@ prior local setup; `.venv`, migrations, and seed data already in place)
 
 ---
 
+## Week 7-8 — Reproduction and plan
+
+**Reproduction:** Added `tests/integration/test_review_concurrency.py`, which
+fires two `process_review()` calls for the same `profile_id` concurrently
+(via `asyncio.gather`, each with its own `AsyncSession`, mirroring two
+`BackgroundTasks` jobs from two near-simultaneous `POST /reviews` calls) and
+records the start/end time of each call's ingestion step. On the current
+(unfixed) code,
+`test_concurrent_reviews_for_same_profile_are_not_serialized` **passes**,
+proving the two calls' ingestion windows overlap — nothing today prevents two
+reviews for the same profile from running at the same time. A companion test,
+`test_concurrent_reviews_for_different_profiles_still_run_in_parallel`, also
+passes, confirming two *different* profiles legitimately do (and should
+continue to) run concurrently — this is the guardrail against overcorrecting
+with a global lock.
+
+**Scope note found during reproduction:** `_run_ingestion_pipeline` in
+`core/services/review_service.py` constructs `IngestedSource(..., raw_data=...)`,
+but `raw_data` isn't a column on the `IngestedSource` model (verified: this
+raises `TypeError: 'raw_data' is an invalid keyword argument for
+IngestedSource`). This means the real ingestion pipeline currently crashes on
+any profile with a `github_username`, `portfolio_url`, or `resume_text`,
+independent of concurrency. This is a separate, pre-existing bug, not part of
+#82's scope. The reproduction test patches
+`_run_ingestion_pipeline`/`_run_agent_orchestration`/
+`_run_rag_retrieval_generation`/`_run_safety_checks` so it can isolate the
+concurrency question without depending on that unrelated fix. Worth filing as
+its own follow-up issue, but out of scope for this PR.
+
+**Fix plan:**
+1. Add a per-profile async lock keyed by `profile_id` (e.g. an
+   `asyncio.Lock` in a small `dict[str, asyncio.Lock]` registry, or a
+   Postgres advisory lock taken at the top of `process_review` and released
+   at the end/on exception) so a second `process_review` call for the same
+   profile waits for the first to finish instead of interleaving with it.
+2. Acquire the lock as early as possible in `process_review` (before the
+   ingestion step) and release it in a `finally` block so a failed review
+   doesn't leave the profile permanently locked.
+3. Do **not** make the lock global — different profiles must keep processing
+   concurrently (covered by the sanity test above).
+4. Flip `test_concurrent_reviews_for_same_profile_are_not_serialized` to
+   assert the two windows do **not** overlap once the lock is in place; keep
+   the different-profiles test asserting they still overlap.
+5. Add a unit test (or extend the existing one) verifying the lock is
+   released even when `process_review` raises, so a failed review doesn't
+   permanently block that profile.
+
+---
+
 ## Parked — Week 7 (previous pick, not pursued)
 
 Issue #153 (Tier 1, faithfulness checker `None` text crash) was initially
