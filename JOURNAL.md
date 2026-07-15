@@ -7,10 +7,70 @@
 **Tier:** [x] Tier 1  [ ] Tier 2  [ ] Tier 3
 
 **Problem summary:**
-The `/health` endpoint appears to read `settings.redis_host`, but that field is not defined on the app’s Settings model. Because of that, the health check can raise an AttributeError before it can report Redis status. A successful fix would make the health endpoint use Redis configuration that actually exists and return health information without crashing.
+The `/health` endpoint checks PostgreSQL, Redis, and vector DB status, but its Redis check originally read `settings.redis_host` and `settings.redis_port` even though the app’s `Settings` model only defines `redis_url`. Because of that mismatch, the Redis check could not use the configured Redis connection information correctly and would mark Redis as unhealthy, contributing to a 503 response.
 
-**Branch name:** fix/155-health-check-redis-settings
+**Why I chose this issue:**
+I chose this issue because it is a clearly scoped Tier 1 backend bug and it touches service health/configuration, which I find interesting. It also seemed like a good fit for a first contribution because the affected area was narrow and the bug could be traced to a specific mismatch between the route code and the settings model.
 
-**Setup confirmation:** [ ] App runs locally at `localhost:5173`
+**Affected area:**
+- `api/routes/health.py`
+- `core/config.py`
+
+**Confirmed investigation notes:**
+- `health.py` originally used `settings.redis_host` and `settings.redis_port`
+- `core/config.py` defines `redis_url`, but not `redis_host` or `redis_port`
+- The Redis exception is caught inside the route, so the issue is not an uncaught crash
+- Instead, Redis is marked unhealthy and the route can return HTTP 503
+
+**Known unknowns during investigation:**
+- Whether the smallest clean fix should parse the URL manually or use a Redis URL-based constructor
+- Whether there was already an existing health-route test pattern in the repo
+- Whether Docker would be required for all validation or whether mocked unit tests would be enough for this issue
+
+**Scope estimate:**
+Small Tier 1 backend fix, likely 1 source file plus 1 focused test file.
+
+**Branch name:** `fix/155-health-check-redis-settings`
 
 **Cohort ledger:** [x] Issue added to cohort ledger
+
+**Issue claim:** [x] Comment posted on GitHub issue
+
+**Setup progress:**
+- [x] Forked repo
+- [x] Cloned repo
+- [x] Created virtual environment
+- [x] Installed Python dependencies with editable install
+- [x] Repaired WSL/Docker startup issue on Windows
+- [ ] App fully runs locally at `localhost:5173`
+
+**Docker / environment blocker:**
+Docker image pulls for local services were blocked by repeated EOF errors while downloading:
+- `postgres:16-alpine`
+- `redis:7-alpine`
+- `chromadb/chroma:0.4.22`
+
+Because of that, I could not fully bring up the repo’s Docker-backed services locally. However, I was still able to continue issue investigation and write focused mocked unit tests for this issue.
+
+**Testing investigation:**
+There were no existing FastAPI `TestClient` tests or health-route tests in the repo. The best nearby patterns were:
+- `tests/unit/test_review_service.py` for `AsyncMock` database usage
+- `tests/unit/test_rate_limiter.py` for Redis mocking
+
+Based on that, I created:
+- `tests/unit/test_health.py`
+
+**Tests added:**
+1. `test_health_check_returns_healthy_when_dependencies_are_healthy`
+2. `test_health_check_uses_redis_url_from_settings`
+
+These tests call `health_check()` directly with mocked dependencies instead of relying on Docker services.
+
+**Implementation progress:**
+I updated the Redis health check in `api/routes/health.py` to use the existing `settings.redis_url` configuration rather than missing `redis_host` / `redis_port` settings.
+
+**Validation status:**
+Focused issue tests now pass locally:
+
+```powershell
+.\.venv\Scripts\python -m pytest tests/unit/test_health.py -v
