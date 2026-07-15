@@ -74,3 +74,4 @@ Focused issue tests now pass locally:
 
 ```powershell
 .\.venv\Scripts\python -m pytest tests/unit/test_health.py -v
+.\.venv\Scripts\python -m pytest tests/unit/test_health.py tests/unit/test_rate_limiter.py -v
