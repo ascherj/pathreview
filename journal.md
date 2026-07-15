@@ -14,3 +14,28 @@ The tech_detector.py script counts files in node_modules/ and build/ directories
 **Setup confirmation:** [x] App runs locally at localhost:5173
 
 **Cohort ledger:** [x] Issue added to cohort ledger
+
+---
+
+## Is This Issue Right for Me?
+
+### Part 1 — Understanding the Issue
+- [x] I can explain the problem and the expected behavior in 2–3 sentences without reading the issue.
+- [x] Do I understand which part of the app is affected? The tech_detector.py module that analyzes repository language composition.
+- [x] I can describe what "done" looks like: tech_detector.py excludes node_modules/ and build/ directories so language detection only counts actual source files.
+
+### Part 2 — Tier Fit
+- [x] Is the tier a realistic match for where I am right now? Yes, this is a Tier 1 fix (self-contained, single/few files, no cross-module understanding needed).
+
+### Part 3 — Codebase Readiness
+- [x] I've found and read the tech_detector.py file and understand the surrounding context.
+- [x] I understand the code well enough to predict what a change will break.
+- [x] I've found and read the test file (tests/unit/test_tech_detector.py) and understand existing tests.
+
+### Part 4 — Scope and Time
+- [x] How many others are already working on this issue? Checked — minimal claims on this issue.
+- [x] Is the scope realistic for Weeks 8–9? Yes, estimated 3–6 hours for a Tier 1 fix.
+- [x] This issue has no open blockers or dependencies on other unresolved issues.
+
+### Verdict
+Ready to proceed.
