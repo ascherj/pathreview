@@ -182,3 +182,72 @@ class TestFetchUrl:
 
         with pytest.raises(WebParserError, match="Failed to fetch"):
             fetch_url("https://example.com")
+
+    def test_redirect_to_internal_is_blocked(self, monkeypatch):
+        """A redirect from a public URL to an internal address is rejected."""
+        # Only the redirect target (link-local metadata IP) is blocked.
+        monkeypatch.setattr(
+            "ingestion.parsers.web_parser._is_blocked_address",
+            lambda host: host == "169.254.169.254",
+        )
+
+        def fake_get(url, **kwargs):
+            return httpx.Response(
+                302,
+                headers={"location": "http://169.254.169.254/latest/meta-data/"},
+                request=httpx.Request("GET", url),
+            )
+
+        monkeypatch.setattr(httpx, "get", fake_get)
+
+        with pytest.raises(WebParserError, match="internal or non-public"):
+            fetch_url("https://public-site.example.com")
+
+    def test_redirect_to_public_is_followed(self, monkeypatch):
+        """A redirect to another public URL is followed and its HTML returned."""
+        monkeypatch.setattr(
+            "ingestion.parsers.web_parser._is_blocked_address",
+            lambda host: False,
+        )
+
+        calls = {"n": 0}
+
+        def fake_get(url, **kwargs):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                return httpx.Response(
+                    301,
+                    headers={"location": "https://www.example.com/home"},
+                    request=httpx.Request("GET", url),
+                )
+            return httpx.Response(
+                200,
+                headers={"content-type": "text/html"},
+                text="<html><body>final</body></html>",
+                request=httpx.Request("GET", url),
+            )
+
+        monkeypatch.setattr(httpx, "get", fake_get)
+
+        html = fetch_url("https://example.com")
+        assert "final" in html
+        assert calls["n"] == 2
+
+    def test_too_many_redirects(self, monkeypatch):
+        """An endless redirect loop is stopped."""
+        monkeypatch.setattr(
+            "ingestion.parsers.web_parser._is_blocked_address",
+            lambda host: False,
+        )
+
+        def fake_get(url, **kwargs):
+            return httpx.Response(
+                302,
+                headers={"location": "https://example.com/next"},
+                request=httpx.Request("GET", url),
+            )
+
+        monkeypatch.setattr(httpx, "get", fake_get)
+
+        with pytest.raises(WebParserError, match="Too many redirects"):
+            fetch_url("https://example.com")

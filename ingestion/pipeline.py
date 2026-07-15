@@ -314,6 +314,11 @@ class IngestionPipeline:
             return skip_result
 
         try:
+            # Remove any prior portfolio chunks for this profile so a changed
+            # URL does not leave stale vectors and re-ingestion does not collide
+            # on duplicate chunk IDs.
+            self._delete_existing_portfolio(profile_id)
+
             # Fetch and parse the portfolio page
             html = fetch_url(url)
             parse_result = self.web_parser.parse(html)
@@ -334,6 +339,8 @@ class IngestionPipeline:
                     "source_type": "portfolio",
                 }
             )
+            # Coerce to ChromaDB-compatible scalar values (no lists/None).
+            metadata = self._sanitize_metadata(metadata)
 
             # Chunk the content
             chunks = self.strategy_selector.chunk(parse_result.text, metadata)
@@ -360,6 +367,49 @@ class IngestionPipeline:
                 error=str(e),
             )
             raise
+
+    def _delete_existing_portfolio(self, profile_id: str) -> None:
+        """
+        Delete previously ingested portfolio chunks for a profile.
+
+        Best-effort: failures are logged but do not block ingestion.
+        """
+        try:
+            self.vector_db.delete(
+                where={
+                    "$and": [
+                        {"profile_id": profile_id},
+                        {"source_type": "portfolio"},
+                    ]
+                }
+            )
+        except Exception as e:
+            logger.warning(
+                "Could not delete existing portfolio chunks",
+                profile_id=profile_id,
+                error=str(e),
+            )
+
+    @staticmethod
+    def _sanitize_metadata(metadata: dict) -> dict:
+        """
+        Coerce metadata values into ChromaDB-compatible scalars.
+
+        ChromaDB only accepts str/int/float/bool metadata values. Lists are
+        joined into comma-separated strings and None values are dropped so the
+        vector-store write does not fail.
+        """
+        sanitized: dict = {}
+        for key, value in metadata.items():
+            if value is None:
+                continue
+            if isinstance(value, (list, tuple, set)):
+                sanitized[key] = ",".join(str(item) for item in value)
+            elif isinstance(value, (str, int, float, bool)):
+                sanitized[key] = value
+            else:
+                sanitized[key] = str(value)
+        return sanitized
 
     def _hash_content(self, content: str | bytes) -> str:
         """Generate a hash of content for deduplication."""

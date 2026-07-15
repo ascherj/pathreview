@@ -1,7 +1,7 @@
 import ipaddress
 import re
 import socket
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 
 import httpx
 from bs4 import BeautifulSoup
@@ -16,6 +16,7 @@ _CONTENT_SECTION_KEYWORDS = ("about", "bio", "project", "experience", "work", "s
 
 _FETCH_TIMEOUT_SECONDS = 10.0
 _MAX_CONTENT_BYTES = 5 * 1024 * 1024  # 5 MB
+_MAX_REDIRECTS = 5
 _USER_AGENT = "PathReviewBot/1.0 (+https://github.com/ascherj/pathreview)"
 
 
@@ -54,6 +55,23 @@ def _is_blocked_address(host: str) -> bool:
     return False
 
 
+def _validate_url(url: str) -> None:
+    """
+    Validate that a URL is safe to fetch.
+
+    Raises:
+        WebParserError: If the scheme is not http/https, the hostname is
+            missing, or the host resolves to a non-public address.
+    """
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        raise WebParserError(f"URL must use http or https scheme, got: {parsed.scheme!r}")
+    if not parsed.hostname:
+        raise WebParserError("URL must include a hostname")
+    if _is_blocked_address(parsed.hostname):
+        raise WebParserError("Refusing to fetch internal or non-public address")
+
+
 def fetch_url(url: str, *, timeout: float = _FETCH_TIMEOUT_SECONDS) -> str:
     """
     Fetch the HTML content of a portfolio URL.
@@ -69,23 +87,31 @@ def fetch_url(url: str, *, timeout: float = _FETCH_TIMEOUT_SECONDS) -> str:
         WebParserError: If the URL is invalid, blocked (SSRF), unreachable,
             or does not return HTML content.
     """
-    parsed = urlparse(url)
-    if parsed.scheme not in ("http", "https"):
-        raise WebParserError(f"URL must use http or https scheme, got: {parsed.scheme!r}")
-    if not parsed.hostname:
-        raise WebParserError("URL must include a hostname")
+    _validate_url(url)
 
-    if _is_blocked_address(parsed.hostname):
-        raise WebParserError("Refusing to fetch internal or non-public address")
-
+    # Follow redirects manually so every hop is re-validated against the SSRF
+    # guard. httpx's follow_redirects would otherwise skip the guard and allow a
+    # public URL to redirect into an internal address.
+    current_url = url
     try:
-        response = httpx.get(
-            url,
-            timeout=timeout,
-            follow_redirects=True,
-            headers={"User-Agent": _USER_AGENT},
-        )
-        response.raise_for_status()
+        for _ in range(_MAX_REDIRECTS + 1):
+            response = httpx.get(
+                current_url,
+                timeout=timeout,
+                follow_redirects=False,
+                headers={"User-Agent": _USER_AGENT},
+            )
+            if response.is_redirect:
+                location = response.headers.get("location")
+                if not location:
+                    break
+                current_url = urljoin(current_url, location)
+                _validate_url(current_url)
+                continue
+            response.raise_for_status()
+            break
+        else:
+            raise WebParserError("Too many redirects")
     except httpx.HTTPError as exc:
         raise WebParserError(f"Failed to fetch URL: {exc}") from exc
 

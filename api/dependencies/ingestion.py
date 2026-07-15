@@ -1,5 +1,7 @@
 """Factory and background task helpers for portfolio ingestion."""
 
+from functools import lru_cache
+
 import structlog
 
 from core.config import settings
@@ -10,12 +12,15 @@ from rag.retriever.vector_store import VectorStore
 log = structlog.get_logger()
 
 
+@lru_cache(maxsize=1)
 def build_ingestion_pipeline() -> IngestionPipeline:
     """
-    Construct an IngestionPipeline from application settings.
+    Construct (once) an IngestionPipeline from application settings.
 
-    Uses the configured embedding provider and a ChromaDB collection from the
-    persistent vector store.
+    Cached so the ChromaDB client and embedding provider are reused across
+    requests rather than rebuilt on every ingestion. Uses the configured
+    embedding provider and a ChromaDB collection from the persistent vector
+    store.
     """
     vector_store = VectorStore(persist_dir=settings.chroma_persist_dir)
     collection = vector_store.get_collection(settings.vector_collection_name)
