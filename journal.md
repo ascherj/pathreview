@@ -42,14 +42,76 @@ Ready to proceed.
 
 ## Week 8 — Reproduction & solution planning
 
-**Reproduction commit link:** [link to commit documenting the reproduced issue]
+**Reproduction commit link:** https://github.com/solo6760/pathreview/commit/13a20bf5841f5d408be6e8f6729697543b42dead
 
 **Reproduction summary:**
-[1–2 sentences: How did you reproduce the issue? What did you observe?]
+I reproduced the issue by running the unit tests `test_node_modules_excluded` and `test_build_directory_excluded` in `tests/unit/test_tech_detector.py`. Both tests failed because `TechDetector` does not exclude directories under skip patterns (like `/node_modules/` or `/build/`) when they appear at the start of relative file paths.
 
-**PLAN.md link:** [link to PLAN.md in your fork]
+**PLAN.md link:** PLAN.md
 
-**Walkthrough video (recommended):** [link to your Loom video, ≤2 min — shared for early feedback]
+## Week 9 — Solution building & PR submission
 
-**Blockers or open questions:**
-[Anything you're still uncertain about going into Week 9, or leave blank]
+### Check-in 1 (mid-week)
+
+**Current progress:**
+I normalized the file path separators and ensured relative paths start with a leading slash in `agent/tools/tech_detector.py`. This resolves the issue where directories like `node_modules/` or `build/` at the root were not matched against skip patterns.
+
+**Next steps:**
+Verify that the full suite of unit tests runs successfully, perform self-review checks, and submit the pull request.
+
+**Blockers:**
+None.
+
+---
+
+### Check-in 2 (end of week)
+
+**PR link:** [link to your submitted pull request]
+
+**Branch:** `fix/150-tech-detector-exclude-paths`
+
+**What you built:**
+I modified `TechDetector._should_skip_file` to replace backslashes with forward slashes and prepend a leading slash to the path before checking it against the skip patterns. This ensures directory patterns such as `/node_modules/` and `/build/` match correctly regardless of whether the path is absolute, relative, or Windows-based.
+
+**Tests added or updated:**
+No new tests were added as the existing failing tests in `tests/unit/test_tech_detector.py` (`test_node_modules_excluded` and `test_build_directory_excluded`) now pass successfully.
+
+**Self-review confirmation:** [x] make check passes  [x] make test-unit passes
+
+**Draft PR feedback received from:** none
+
+## Week 10 — Iteration & reflection
+
+### Reviewer feedback
+
+**Feedback received:** [ ] Yes  [ ] No — still awaiting review
+
+**Summary of feedback:**
+[What did reviewers comment on? Or note that no review came in.]
+
+**How you responded:**
+[What changes did you make, or what did you reply? If no feedback,
+leave blank.]
+
+---
+
+### Reflection
+
+**What was harder than you expected?**
+[Be specific — what part of the process, codebase, or workflow
+surprised you?]
+
+**What did you learn about working in a large codebase?**
+[What's different about contributing to someone else's production code
+vs. building your own project?]
+
+**How did AI tools help — and where did they fall short?**
+[Where was AI assistance most useful this module? Where did you need
+to go beyond what AI could give you?]
+
+**What would you do differently if you started over?**
+[Issue selection, planning, implementation, or process — anything
+you'd change?]
+
+**What are you most proud of from this module?**
+[One thing — it doesn't have to be the PR itself.]
