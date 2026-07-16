@@ -32,6 +32,7 @@ jobs:
         run: mypy api/ core/ ingestion/ rag/ agent/ safety/ --ignore-missing-imports
 
   test-unit:
+    needs: typecheck
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -46,6 +47,7 @@ jobs:
           LLM_PROVIDER: mock
 
   test-integration:
+    needs: typecheck
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -93,24 +95,15 @@ jobs:
       - run: pip install -e ".[dev]"
       - run: pip install pip-audit
       - name: Audit Python dependencies
-        run: pip-audit --format=json --output pip-audit-report.json || true
+        run: pip-audit
       - uses: actions/setup-node@v4
         with:
           node-version: "18"
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - run: npm ci
-        working-directory: frontend
+      - run: cd frontend && npm ci
       - name: Audit Node.js dependencies
-        run: npm audit --json > npm-audit-report.json || true
-        working-directory: frontend
-      - name: Upload audit reports
-        uses: actions/upload-artifact@v4
-        with:
-          name: audit-reports
-          path: |
-            pip-audit-report.json
-            frontend/npm-audit-report.json
+        run: cd frontend && npm audit --audit-level=high
 
   frontend:
     runs-on: ubuntu-latest
@@ -121,8 +114,6 @@ jobs:
           node-version: "18"
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - run: npm ci
-        working-directory: frontend
+      - run: cd frontend && npm ci
       - name: Frontend lint and tests
-        run: npm test -- --run
-        working-directory: frontend
+        run: cd frontend && npm test -- --run
