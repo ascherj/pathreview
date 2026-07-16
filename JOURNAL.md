@@ -1,5 +1,25 @@
 # Journal — Issue #155: Redis health check config bug
 
+## Week 7 — Issue selection
+
+**Issue link:** https://github.com/ascherj/pathreview/issues/155
+
+**Issue title:** Health check references `settings.redis_host`, which does not exist on Settings
+
+**Tier:** [x] Tier 1  [ ] Tier 2  [ ] Tier 3
+
+**Problem summary:**
+The `/health` endpoint's Redis check in `api/routes/health.py` references `settings.redis_host` and `settings.redis_port`, but the `Settings` class only defines `redis_url` — those two fields don't exist anywhere in the config. Because the check is wrapped in a broad `except Exception`, the resulting `AttributeError` gets silently swallowed and reported as `"redis": "unhealthy"` instead of crashing. In practice this means the health endpoint reports Redis as down on every single request, regardless of whether Redis is actually running — a permanent false negative that would make this monitoring signal useless in production. A successful fix makes the Redis check use the config field that actually exists (`redis_url`) so the endpoint reports Redis's real status.
+
+**"Is this right for me?" checklist reasoning:**
+Confirmed I could explain the issue and locate the exact files (`api/routes/health.py`, `core/config.py`) before claiming it. Tier 1 is a realistic match since this is a fresh contribution to an unfamiliar large codebase, and the fix is confined to a single function in one file. Checked the cohort ledger and found one other person already claimed #155 — confirmed with my own reasoning (and the module brief) that claims are non-exclusive and grading is based on my own submitted work, not on being first, so I proceeded. No blockers or dependencies noted on the issue.
+
+**Branch name:** fix/155-redis-host-config
+
+**Setup confirmation:** [x] App runs locally at localhost:5173
+
+**Cohort ledger:** [x] Issue added to cohort ledger
+
 ## Codebase Map (Week 7)
 
 - `api/main.py` — FastAPI app factory, registers all route blueprints.
@@ -52,63 +72,4 @@ genuinely healthy.
 2. Confirmed via `docker compose ps` that Redis was genuinely healthy.
 3. Hit the endpoint directly: `curl http://localhost:8000/health`.
 4. Result: `{"status":"unhealthy","dependencies":{"postgres":"unhealthy","redis":"unhealthy","vector_db":"healthy"}, ...}`
-5. Confirmed the specific cause in the server's own logs:
-   `redis_health_check_failed error="'Settings' object has no attribute 'redis_host'"`
-
-(Note: `postgres` also showed unhealthy in this run — that's a separate,
-unrelated bug, issue #154, a raw-SQL-string incompatibility with SQLAlchemy 2.x.
-I confirmed this is a different issue and stayed scoped to #155 only.)
-
-## Root Cause
-
-`api/routes/health.py`'s Redis check constructed a client with:
-```python
-r = redis.Redis(host=settings.redis_host, port=settings.redis_port, db=0, decode_responses=True)
-```
-`Settings` (in `core/config.py`) has no `redis_host`/`redis_port` fields —
-only `redis_url`, which is also the only Redis config value used anywhere else
-in the codebase (confirmed via `grep -rn "redis.Redis(\|redis_url" .` — no
-other file constructs a raw `redis.Redis` client or references host/port
-config). This confirmed the fix should use the existing `redis_url` field
-rather than invent new config fields.
-
-## Fix
-
-Replaced the client construction with:
-```python
-r = redis.Redis.from_url(settings.redis_url, decode_responses=True)
-```
-`redis-py`'s built-in `from_url` classmethod parses a connection URL directly,
-matching the one Redis config value that actually exists.
-
-## Testing
-
-No test file existed for `api/routes/health.py` prior to this fix — this
-project's test suite has no established pattern for testing a route directly
-(no `TestClient`, no `get_db` override anywhere). Created
-`tests/unit/test_health_routes.py` with two tests:
-- Redis check reports `"healthy"` when `redis.Redis.from_url(...).ping()`
-  succeeds (the regression test for this fix)
-- Redis check reports `"unhealthy"` when the Redis connection genuinely fails
-  (confirms the failure path still works correctly)
-
-Both use a `TestClient` with `get_db` overridden via
-`app.dependency_overrides`, and mock `redis.Redis.from_url` rather than
-hitting a real Redis instance, matching the unit-test-only pattern the rest of
-the suite uses.
-
-## Verification
-
-- `curl http://localhost:8000/health` against the live running app: `redis`
-  now reports `"healthy"`.
-- `python -m pytest tests/unit/test_health_routes.py -v`: both new tests pass.
-- `make test-unit` (full suite): confirmed via `git stash` comparison that the
-  full suite has 53 pre-existing failures across unrelated modules (bias
-  detector, PII scrubber, skill extractor, tech detector, and others) both
-  before and after my change — my change introduces zero new failures.
-- `make check` / pre-commit hooks: flagged pre-existing `ruff`/`mypy` issues
-  across many files I never touched (`api/main.py`, `api/routes/reviews.py`,
-  `core/services/review_service.py`, etc.), none of which are related to my
-  change. Fixed the 4 new mypy errors introduced by my own new test file
-  (missing return type annotations). Committed with `--no-verify` for the
-  pre-existing, out-of-scope repo-wide debt, documented here transparently.
+5. Confirmed the specific cause in the
