@@ -20,3 +20,15 @@
 * **Part 2 (Tier Fit):** I selected a Tier 3 issue because I have strong prior experience with React and feel confident building a new component from scratch without getting overwhelmed. 
 * **Part 3 (Codebase):** I've identified exactly where the new files (`ComparisonView.tsx` and `diffFormatter.ts`) need to be created and how they fit into the existing frontend structure. 
 * **Part 4 (Scope):** The 7–10 hour estimate is realistic for my schedule over the next two weeks, and there are no external blockers.
+
+## Week 8 — Reproduction & solution planning
+
+**Reproduction commit link:** [paste your commit link here]
+
+**Reproduction summary:**
+Because this is a feature gap rather than a bug, my reproduction involved navigating the local application to the user dashboard/review history view. I confirmed that there is currently no UI element, route, or utility that allows a user to select multiple reviews for comparison. I documented this missing state with a commit outlining where the entry point for the new feature should live.
+
+**PLAN.md link:** [PLAN.md]
+
+**Blockers or open questions:**
+I need to investigate the existing data flow to see if a user's full review history is already available in the frontend state, or if I will need to modify the data-fetching logic to populate the comparison dropdowns.
