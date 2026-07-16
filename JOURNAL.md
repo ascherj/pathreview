@@ -23,7 +23,7 @@
 
 ## Week 8 — Reproduction & solution planning
 
-**Reproduction commit link:** [paste your commit link here]
+**Reproduction commit link:** [https://github.com/ColonelToad/pathreview/commit/74aa05357fcd305273fcb5b7b68a9a5dd100201c]
 
 **Reproduction summary:**
 Because this is a feature gap rather than a bug, my reproduction involved navigating the local application to the user dashboard/review history view. I confirmed that there is currently no UI element, route, or utility that allows a user to select multiple reviews for comparison. I documented this missing state with a commit outlining where the entry point for the new feature should live.
