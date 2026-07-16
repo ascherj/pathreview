@@ -22,7 +22,7 @@ List the specific files you expect to touch.:
 What are the steps to fix this issue?
 Break it into 3–5 concrete sub-tasks.
 
-1. Write `scripts/validate_migrations.sh`. It reads the `DATABASE_URL` from the environment and runs, in order: `alembic upgrade head` (applies all migrations, fails if one is broken), then `alembic check` (compares the schema to the models and fails if there's drift), and optionally `alembic downgrade base` to make sure they're reversible. I'll use `set -euo pipefail` so any failing step kills the whole script.
+1. Write `scripts/validate_migrations.sh`. It reads the `DATABASE_URL` from the environment and runs, in order: `alembic upgrade head` (applies all migrations, fails if one is broken), and `alembic check` (compares the schema to the models and fails if there's drift).
 2. Add a migrations job to `ci.yml` that stands up a Postgres service, installs deps, and runs the script with `DATABASE_URL` pointed at that service.
 3. Test that it actually works: with my broken migration 003 still there, the new job should fail. Once I remove 003, it should pass. That's how I know the check does its job.
 4. Remove the reproduction migration (003) once I've confirmed the check catches it, so main stays clean.
@@ -30,7 +30,7 @@ Break it into 3–5 concrete sub-tasks.
 ### Inputs & outputs
 What does your fix take as input? What should it produce or change?
 
-Input is a `DATABASE_URL` pointing at a fresh, empty Postgres database, plus the current migrations and models. Output is just an exit code — 0 if everything applies cleanly and matches the models, non-zero (with an error message) if not. In CI that shows up as a passing or failing check on the PR. The only things that change are the new script and the new CI job — no app code.
+Input is a `DATABASE_URL` pointing at a fresh, empty database, and the current migrations and models. Output is just an exit code — 0 if everything applies cleanly and matches the models, and a non-zero value with an error message if not. In CI that shows up as a passing or failing check on the PR. The only things that change are the new script and the new CI job — no app code.
 
 ### Risks & unknowns
 What could go wrong? What are you still unsure about?
@@ -38,7 +38,6 @@ What could go wrong? What are you still unsure about?
 - The database has to be empty every run, otherwise `upgrade head` might fail for the wrong reason. CI's throwaway Postgres service should handle that.
 - Migrations run through the async driver (`postgresql+asyncpg`) in `env.py`, so I need to make sure `alembic check` actually works through that path in CI.
 - `alembic check` might flag stuff the models allow on purpose (server defaults, index naming, etc.), so I want to confirm the current correct repo passes `check` before I trust it to fail on real problems.
-- Not sure if the downgrade step is worth the extra CI time — I'll drop it if it gets flaky.
 
 ### Edge cases
 What inputs or states should your fix handle gracefully?
@@ -47,4 +46,3 @@ What inputs or states should your fix handle gracefully?
 - A migration that applies but drifts from the models (like my 003) → `alembic check` fails → build fails.
 - No migrations, or a DB that's already up to date → should just pass without doing anything.
 - Multiple heads from a branched history → `upgrade head` should error clearly instead of hanging.
-- A migration that isn't reversible → `downgrade base` fails and flags it.
