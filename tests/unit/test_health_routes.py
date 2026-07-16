@@ -17,7 +17,7 @@ from core.database import get_db
 
 
 @pytest.fixture
-def client():
+def client() -> TestClient:
     """TestClient with the get_db dependency overridden to avoid needing a real database."""
 
     async def override_get_db():
@@ -30,7 +30,7 @@ def client():
     app.dependency_overrides.clear()
 
 
-def test_health_check_reports_redis_healthy_when_ping_succeeds(client):
+def test_health_check_reports_redis_healthy_when_ping_succeeds(client: TestClient) -> None:
     """
     Regression test for issue #155.
 
