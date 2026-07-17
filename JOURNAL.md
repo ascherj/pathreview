@@ -23,9 +23,9 @@ accompanying unit test.
 
 **Branch name:** fix/154-health-check-sql-text
 
-**Setup confirmation:** [ ] App runs locally at localhost:5173
+**Setup confirmation:** [x] App runs locally at localhost:5173
 
-**Cohort ledger:** [ ] Issue added to cohort ledger
+**Cohort ledger:** [x] Issue added to cohort ledger
 
 ---
 
@@ -43,3 +43,10 @@ accompanying unit test.
   any external AI service.
 - **Correct difficulty match.** Labeled `good first issue` + `tier-1`, which
   fits a first contribution to a large codebase.
+
+**Reproduction confirmed locally:** With the stack running, `GET
+http://localhost:8000/health` returns HTTP 503 with `postgres: "unhealthy"`,
+even though PostgreSQL is up (seeding connected successfully and the Docker
+container reports healthy). The handler in `api/routes/health.py` catches the
+SQLAlchemy 2.x `ArgumentError` from the unwrapped `SELECT 1` and mislabels the
+database as down — exactly the behavior described in the issue.
