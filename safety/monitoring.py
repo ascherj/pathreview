@@ -2,7 +2,7 @@
 
 import redis
 import structlog
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 
 logger = structlog.get_logger()
 
@@ -38,7 +38,7 @@ class SafetyMonitor:
             logger.warning("unknown_event_type", event_type=event_type)
             return
 
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.now(timezone.utc).isoformat()
 
         try:
             # Log to structlog
