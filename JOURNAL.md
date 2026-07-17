@@ -15,3 +15,26 @@ The PII scrubber currently recognizes US phone numbers written with dashes (such
 **Setup confirmation:** [X] App runs locally at localhost:5173
 
 **Cohort ledger:** [X] Issue added to cohort ledger
+
+
+
+
+
+## Week 8 — Reproduction & solution planning
+
+**Reproduction commit link:** (https://github.com/sr-0397/pathreview/tree/fix/146-pii-scrub-phone-num)
+
+
+**Reproduction summary:**
+Ran the repro script (the scratch_repro.py) from issue #146 locally and confirmed scrub() leaves
+"(555) 123-4567" unredacted while the dashed format is caught, and detect()
+returns [] for the parenthesized number. Confirmed via 4 failing tests in
+tests/unit/test_pii_scrubber.py.
+
+**PLAN.md link:** (https://github.com/sr-0397/pathreview/tree/fix/146-pii-scrub-phone-num)
+
+**Blockers or open questions:**
+Not sure how to deal w edge cases yet...
+- Phone number at the very start or end of a string
+- Multiple phone numbers, mixed formats, in one string
+- Numbers with a leading "+1" country code plus parens
