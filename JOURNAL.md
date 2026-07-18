@@ -1,6 +1,6 @@
 ## Week 7 — Issue selection
 
-**Issue link:** https://github.com/jamjamgobambam/pathreview/issues/129
+**Issue link:** https://github.com/ascherj/pathreview/issues/129
 
 **Issue title:** Add a database migration validation step to CI that checks all migrations can be applied cleanly #129
 
