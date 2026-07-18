@@ -33,7 +33,7 @@ I reproduced the bug at the service layer: seeded a real Chroma collection (`pro
 
 ## Week 9 — Solution building & PR submission
 
-### Check-in 1 (mid-week)
+### Check-in 1 (mid-week, done a week early)
 
 **Current progress:**
 All 5 sub-tasks from `PLAN.md` are done: added `VectorStore.delete_collection()` plus a `get_vector_store()` singleton accessor (`rag/retriever/vector_store.py`), wired a `vector_store` parameter into `delete_profile()` so it deletes the profile's Chroma collection after the DB commit succeeds and only logs (doesn't fail the request) if that cleanup errors (`core/services/profile_service.py`), and wired the `VectorStore` dependency into `delete_profile_endpoint()` via `Depends(get_vector_store)` (`api/routes/profiles.py`). Updated the Week 8 reproduction test to assert the fixed behavior and added an edge-case test for profiles with no vector collection at all (`tests/unit/test_profile_service_vector_cleanup.py`), plus a new `tests/unit/test_vector_store.py` covering `delete_collection()` directly. Ran the full `tests/unit` suite before and after my change (via `git stash`) to confirm: 53 pre-existing failures unrelated to this issue exist both before and after — my change introduces zero new failures.
@@ -48,7 +48,7 @@ The pre-commit `mypy` hook still fails on the same pre-existing `core/services/p
 
 ### Check-in 2 (end of week)
 
-**PR link:** <!-- FILL IN after opening the PR, e.g. https://github.com/ascherj/pathreview/pull/NN -->
+**PR link:** https://github.com/ascherj/pathreview/pull/180
 
 **Branch:** `fix/80-delete-remaining-records`
 
@@ -61,4 +61,4 @@ Added `tests/unit/test_vector_store.py` covering `VectorStore.delete_collection(
 **Self-review confirmation:** [x] make check passes [x] make test-unit passes
 <!-- "passes" per the module's pre-existing-failures rule = introduces no NEW failures. Verified via git stash: the 17 mypy errors (7 in profile_service.py, 10 in profiles.py), 177 ruff errors, 49 black-reformat files, and 53 unit-test failures are all pre-existing and identical before/after this change. All 5 touched files pass black --check; the pinned pre-commit ruff+black hooks pass on every commit. Documented in the PR's "Notes for Reviewers". -->
 
-**Draft PR feedback received from:** <!-- FILL IN: classmate/mentor name or Discord handle, or "none" -->
+**Draft PR feedback received from:** none
