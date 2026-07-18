@@ -119,4 +119,12 @@ class StructuralChunker(BaseChunker):
                 "level": heading_stack[-1][0] if heading_stack else 0,
             })
 
+        # If no headings were found but text exists, return whole document as one section
+        if not sections and text.strip():
+            sections.append({
+                "content": text.strip(),
+                "path": ["(root)"],
+                "level": 0,
+            })
+
         return sections

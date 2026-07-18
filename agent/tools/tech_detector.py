@@ -152,13 +152,20 @@ class TechDetector(BaseTool):
         """
         skip_patterns = [
             "/node_modules/",
+            "node_modules/",
             "/vendor/",
+            "vendor/",
             "/dist/",
+            "dist/",
             "/build/",
+            "build/",
             "/.git/",
             "/__pycache__/",
             "/.venv/",
             "/venv/",
+            "bower_components/",
+            ".next/",
+            "target/",
         ]
 
         return any(pattern in filepath for pattern in skip_patterns)
