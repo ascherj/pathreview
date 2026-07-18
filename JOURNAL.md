@@ -12,6 +12,11 @@ The unit test suite for the review service subsystem is currently broken because
 **Selection Notes & Scope Reasoning:**
 I selected this issue because it is categorized as Tier 1, meaning it is strictly scoped to a single file (`tests/unit/test_review_service.py`) and does not require complex cross-module architectural updates. As a data professional working with asynchronous testing environments, this is an excellent fit for my current skill level; it allows me to resolve a blocking test environment issue without changing core application workflows.
 
+* **Part 1 — Understanding the Issue:** Verified. I can clearly explain the asynchronous mock regression in plain words. I have located the target test file and confirmed that the explicit goal is to get the 13 failing unit tests passing by matching the mock behavior to what the production CRUD methods expect.
+* **Part 2 — Tier Fit:** Verified. This is a Tier 1 issue because it is an isolated, self-contained test environment bug. It is a highly realistic match for orienting myself in the PathReview codebase during the first week of the module.
+* **Part 3 — Codebase Readiness:** Verified. I have opened, read, and successfully run the test suite for `tests/unit/test_review_service.py` locally in my environment, reproducing the precise `AttributeError` tracebacks. I understand the mock configuration patterns currently in use.
+* **Part 4 — Scope and Time:** Verified. The scope is tight and well-defined, taking an estimated 2–4 hours of focused work. This is perfectly achievable around my ongoing professional and graduate coursework commitments, and there are no external engineering blockers.
+
 **Branch name:** fix/158-review-service-async-mocks
 **Setup confirmation:** [x] App runs locally at localhost:5173
 **Cohort ledger:** [x] Issue added to cohort ledger
