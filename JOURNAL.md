@@ -10,7 +10,8 @@
 [In 3–5 sentences, in your own words: what the issue is (not a copy-paste of
 the title), what is currently broken or missing, and what a successful fix
 would accomplish. Naming the part of the codebase it affects is helpful context.]
-Currently there are no integration test testing the full agent lifecycle, we want to write tests that run after every PR to ensure our agent lifeceycle is not broken.
+
+Adding integration test for the full agent lifecycle. Given is a major component of this application, we'd want to these tests to run after every PR to ensure our agent lifeceycle is not broken during any code contribution or feature development. Integration tests allow us to catch mistakes before merging it into main/master/develop branch and shortens the feedback cycle.
 
 **Branch name:** test/59-end-to-end-agent-test
 
