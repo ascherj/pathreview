@@ -7,11 +7,8 @@
 **Tier:** [ ] Tier 1  [ ] Tier 2  [ x ] Tier 3
 
 **Problem summary:**
-[In 3–5 sentences, in your own words: what the issue is (not a copy-paste of
-the title), what is currently broken or missing, and what a successful fix
-would accomplish. Naming the part of the codebase it affects is helpful context.]
 
-Adding integration test for the full agent lifecycle. Given is a major component of this application, we'd want to these tests to run after every PR to ensure our agent lifeceycle is not broken during any code contribution or feature development. Integration tests allow us to catch mistakes before merging it into main/master/develop branch and shortens the feedback cycle.
+The `Orchestrator` class in `agent/orchestrator.py` is the core of the application — it builds a plan, dispatches all five analysis tools, aggregates results, and persists state to Redis — but `tests/integration/` is currently empty, meaning there is zero test coverage of this lifecycle. Any change to the orchestrator, a tool interface, or the session store could silently break the full agent flow without any test catching it. A successful fix adds `tests/integration/test_agent_e2e.py` that exercises the complete run cycle using fully stubbed tools and a dict-backed session store, asserting that the correct tools are called for a given profile, results are aggregated properly, and tool failures are handled gracefully.
 
 **Branch name:** test/59-end-to-end-agent-test
 
@@ -90,7 +87,8 @@ Rough implementation plan (no lookups needed):
 [x] No open blockers or upstream issues referenced in #59.
 
 ### Reasoning
-I think this is the right scope for me because is self contained, and I've explored all the relevant files and paths that are needed to be tested.
+
+Tier 3 is the right fit because the E2E test requires understanding the full agent subsystem at once: how `_build_plan()` conditionally selects tools, how `_execute_tool()` checks the `ContextManager` cache, how `retry_with_backoff` wraps each call, how `ToolResult.data` is unpacked into the results dict, and how `SessionStore` persists state — spanning `agent/`, `agent/tools/`, `agent/memory/`, and `agent/error_handling.py`. Single-tool isolation tests (Tier 1) already exist in `tests/unit/`; this issue specifically requires stitching all five tools and the session layer together, which is what makes it Tier 3.
 
 ---
 
