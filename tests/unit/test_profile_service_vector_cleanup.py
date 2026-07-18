@@ -1,7 +1,8 @@
-"""Reproduction test for issue #80: profile deletion doesn't clean up vector store embeddings."""
+"""Regression tests for issue #80: profile deletion must clean up vector store embeddings."""
 
+from pathlib import Path
 from unittest.mock import AsyncMock, Mock
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -11,10 +12,10 @@ from rag.retriever.vector_store import VectorStore
 
 @pytest.mark.unit
 class TestProfileDeletionVectorCleanup:
-    """Documents that delete_profile() leaves orphaned embeddings in the vector store."""
+    """Verifies delete_profile() removes the profile's Chroma collection."""
 
     @pytest.fixture
-    def mock_db_session(self):
+    def mock_db_session(self) -> AsyncMock:
         session = AsyncMock()
         session.add = Mock()
         session.delete = AsyncMock()
@@ -22,7 +23,11 @@ class TestProfileDeletionVectorCleanup:
         return session
 
     @pytest.fixture
-    def seeded_vector_store(self, tmp_path, profile_id):
+    def profile_id(self) -> UUID:
+        return uuid4()
+
+    @pytest.fixture
+    def seeded_vector_store(self, tmp_path: Path, profile_id: UUID) -> VectorStore:
         """A real VectorStore with one chunk embedded for the profile's collection."""
         store = VectorStore(persist_dir=str(tmp_path))
         chunk = Mock(
@@ -36,10 +41,11 @@ class TestProfileDeletionVectorCleanup:
         return store
 
     @pytest.fixture
-    def profile_id(self):
-        return str(uuid4())
+    def empty_vector_store(self, tmp_path: Path) -> VectorStore:
+        """A real VectorStore with no collections created yet."""
+        return VectorStore(persist_dir=str(tmp_path))
 
-    def _mock_execute_sequence(self, mock_db_session, profile):
+    def _mock_execute_sequence(self, mock_db_session: AsyncMock, profile: Mock) -> None:
         """delete_profile() calls db.execute() three times: get_profile, reviews, ingested_sources.
 
         The objects returned by `await db.execute(...)` are synchronous result
@@ -60,24 +66,32 @@ class TestProfileDeletionVectorCleanup:
         )
 
     @pytest.mark.asyncio
-    async def test_delete_profile_leaves_embeddings_in_vector_store(
-        self, mock_db_session, seeded_vector_store, profile_id
-    ):
-        """
-        Reproduces #80: after delete_profile() succeeds, the profile's Chroma
-        collection still contains its embedded chunks because delete_profile()
-        never calls into the vector store. This test currently PASSES, which
-        documents the bug; it should start failing once the fix removes the
-        collection, at which point this assertion flips.
-        """
+    async def test_delete_profile_removes_vector_store_collection(
+        self, mock_db_session: AsyncMock, seeded_vector_store: VectorStore, profile_id: UUID
+    ) -> None:
+        """Fixes #80: after delete_profile() succeeds, the profile's Chroma
+        collection and its embeddings are gone, not just the Postgres rows."""
         user_id = uuid4()
         profile = Mock()
         profile.id = profile_id
         self._mock_execute_sequence(mock_db_session, profile)
 
-        deleted = await delete_profile(mock_db_session, profile_id, user_id)
+        deleted = await delete_profile(mock_db_session, profile_id, user_id, seeded_vector_store)
         assert deleted is True
 
         collection = seeded_vector_store.get_collection(f"profile_{profile_id}")
         remaining = collection.get(include=["documents"])
-        assert remaining["ids"] == ["chunk-1"]
+        assert remaining["ids"] == []
+
+    @pytest.mark.asyncio
+    async def test_delete_profile_with_no_vector_collection_does_not_raise(
+        self, mock_db_session: AsyncMock, empty_vector_store: VectorStore, profile_id: UUID
+    ) -> None:
+        """Edge case: a profile that was never ingested has no Chroma collection at all."""
+        user_id = uuid4()
+        profile = Mock()
+        profile.id = profile_id
+        self._mock_execute_sequence(mock_db_session, profile)
+
+        deleted = await delete_profile(mock_db_session, profile_id, user_id, empty_vector_store)
+        assert deleted is True
