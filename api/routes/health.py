@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 import structlog
 from datetime import datetime, timedelta
+from sqlalchemy import text
 
 from core.database import get_db
 
@@ -28,7 +29,7 @@ async def health_check(db=Depends(get_db)):
 
     try:
         # Check PostgreSQL
-        await db.execute("SELECT 1")
+        await db.execute(text("SELECT 1"))
         health_status["dependencies"]["postgres"] = "healthy"
         log.debug("postgres_health_check_passed")
     except Exception as exc:
@@ -41,12 +42,7 @@ async def health_check(db=Depends(get_db)):
         import redis
         from core.config import settings
 
-        r = redis.Redis(
-            host=settings.redis_host,
-            port=settings.redis_port,
-            db=0,
-            decode_responses=True,
-        )
+        r = redis.Redis.from_url(settings.redis_url, decode_responses=True)
         r.ping()
         health_status["dependencies"]["redis"] = "healthy"
         log.debug("redis_health_check_passed")
