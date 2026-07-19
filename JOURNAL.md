@@ -31,3 +31,17 @@ The faithfulness checker in rag/evaluator/faithfulness_checker.py determines whe
 
 **Cohort ledger:**  
 - [x] Issue added to cohort ledger
+
+## Week 8 — Reproduction & solution planning
+
+**Reproduction commit link:** [Issue #152 reproduction commit](https://github.com/JohnThantSynHtet/pathreview/commit/19eafd5)
+
+**Reproduction summary:**  
+I checked out the original base commit `664c3d7` and ran three focused faithfulness checker tests. All three failed with scores of `0.0`, confirming that supported short claims were incorrectly marked unsupported; after returning to my fix branch, the same three tests passed.
+
+**PLAN.md link:** [Solution plan](https://github.com/JohnThantSynHtet/pathreview/blob/fix/152-short-claim-support/PLAN.md)
+
+**Walkthrough video (recommended):** Not recorded.
+
+**Blockers or open questions:**  
+No current blockers. The main risk going into Week 9 is ensuring that the relaxed threshold for short claims does not create false positives or change the expected behavior for longer claims.
