@@ -12,7 +12,7 @@
 - [ ] Tier 3
 
 **Problem summary:**  
-The faithfulness checker determines whether claims in generated feedback are supported by retrieved context. Its current logic requires at least two meaningful overlapping tokens, which causes valid short claims such as “Knows Python” to be marked unsupported even when the context clearly mentions Python expertise. This causes partial-support and multiple-skill examples to incorrectly receive scores of zero. A successful fix will normalize tokens and allow short factual competency claims to be recognized while preserving stricter checks for longer claims.
+The faithfulness checker in rag/evaluator/faithfulness_checker.py determines whether claims in generated feedback are supported by retrieved context. Its current logic requires at least two meaningful overlapping tokens, which causes valid short claims such as "Knows Python" to be marked unsupported even when the context clearly mentions Python expertise. This causes partial-support and multiple-skill examples to incorrectly receive scores of zero. A successful fix will normalize tokens and allow short factual competency claims to be recognized while preserving stricter checks for longer claims.
 
 **Selection notes and scope reasoning:**  
 - The issue was open and had no linked branch or pull request when I selected it.
