@@ -170,25 +170,48 @@ class SkillExtractor:
                 evidence=python_evidence,
             )
 
-        # JavaScript/TypeScript detection
+        # JavaScript detection
         js_evidence = []
-        if ".js" in str(filename or "").lower():
-            js_evidence.append("JavaScript file extension (.js)")
-        if ".ts" in str(filename or "").lower():
-            js_evidence.append("TypeScript file extension (.ts)")
-        if re.search(r"\b(import|require)\s+", text):
-            js_evidence.append("CommonJS or ES6 imports")
+        if ".js" in str(filename or "").lower() or ".jsx" in str(filename or "").lower():
+            js_evidence.append("JavaScript file extension")
+        if ".js" in text_lower or ".jsx" in text_lower:
+            js_evidence.append("JavaScript file references")
+        if "javascript" in text_lower or "js" in text_lower.split():
+            js_evidence.append("JavaScript keywords/references")
+        # Check for JS keywords in the text
+        js_keywords_found = [kw for kw in self.JS_TS_KEYWORDS if re.search(rf"\b{kw}\b", text)]
+        if len(js_keywords_found) >= 2:
+            js_evidence.append(f"JavaScript syntax indicators ({', '.join(js_keywords_found[:3])})")
         if "package.json" in text_lower:
             js_evidence.append("package.json found")
 
         if js_evidence:
-            confidence = min(0.95, 0.6 + len(js_evidence) * 0.1)
-            lang = "TypeScript" if ".ts" in str(filename or "").lower() else "JavaScript"
-            skills_dict[lang] = SkillDetection(
-                name=lang,
+            skills_dict["JavaScript"] = SkillDetection(
+                name="JavaScript",
                 category="Language",
-                confidence=confidence,
+                confidence=min(0.95, 0.6 + len(js_evidence) * 0.1),
                 evidence=js_evidence,
+            )
+
+        # TypeScript detection
+        ts_evidence = []
+        if ".ts" in str(filename or "").lower() or ".tsx" in str(filename or "").lower():
+            ts_evidence.append("TypeScript file extension")
+        if ".ts" in text_lower or ".tsx" in text_lower:
+            ts_evidence.append("TypeScript file references")
+        if "typescript" in text_lower or "ts" in text_lower.split():
+            ts_evidence.append("TypeScript keywords/references")
+        if "interface" in text_lower or "type " in text_lower or "declare " in text_lower:
+            ts_evidence.append("TypeScript type system indicators")
+        if "tsconfig.json" in text_lower:
+            ts_evidence.append("tsconfig.json found")
+
+        if ts_evidence:
+            skills_dict["TypeScript"] = SkillDetection(
+                name="TypeScript",
+                category="Language",
+                confidence=min(0.95, 0.6 + len(ts_evidence) * 0.1),
+                evidence=ts_evidence,
             )
 
         # Other languages by extension
@@ -249,6 +272,16 @@ class SkillExtractor:
         """Detect databases."""
         text_lower = text.lower()
 
+        # Handle PostgreSQL/Postgres indicators like psycopg2, asyncpg, etc.
+        pg_indicators = ["psycopg", "asyncpg", "pg8000"]
+        if any(ind in text_lower for ind in pg_indicators):
+            skills_dict["PostgreSQL"] = SkillDetection(
+                name="PostgreSQL",
+                category="Database",
+                confidence=0.95,
+                evidence=["Found PostgreSQL client/driver reference in content"],
+            )
+
         for db, confidence in self.DATABASES.items():
             if db in text_lower:
                 display_name = db.upper() if db in ["sql", "nosql"] else db.title()
@@ -264,7 +297,26 @@ class SkillExtractor:
         """Detect tools and DevOps technologies."""
         text_lower = text.lower()
 
+        # Handle Docker specifically with multiple indicators
+        docker_evidence = []
+        if "docker" in text_lower:
+            docker_evidence.append("Found 'docker' reference in content")
+        if "from " in text_lower and "run " in text_lower and "expose " in text_lower:
+            docker_evidence.append("Dockerfile instructions detected")
+        if "version:" in text_lower and "services:" in text_lower and "build:" in text_lower:
+            docker_evidence.append("Docker Compose configuration detected")
+
+        if docker_evidence:
+            skills_dict["Docker"] = SkillDetection(
+                name="Docker",
+                category="Tool",
+                confidence=0.95,
+                evidence=docker_evidence,
+            )
+
         for tool, confidence in self.TOOLS.items():
+            if tool == "docker":
+                continue
             if tool in text_lower:
                 display_name = tool.upper() if tool in ["ci/cd"] else tool.title()
                 if display_name not in skills_dict:
