@@ -32,3 +32,76 @@ I reproduced the issue locally in my environment by running `pytest tests/unit/t
 
 **Blockers or open questions:**
 None. The error behavior perfectly mirrors the issue description, and the resolution path is entirely isolated to the test configuration script.
+
+## Week 9 — Solution building & PR submission
+
+### Check-in 1 (mid-week)
+
+**Current progress:**
+I successfully refactored the database return mock structures within `tests/unit/test_review_service.py`. Sub-tasks 1, 2, and 3 from `PLAN.md` are completely implemented, converting the recursively chaining mock result objects from `AsyncMock` layers to clean, synchronous `Mock` components that exactly align with what the production code expects.
+
+```bash
+ai201) rociodv@WIN-MU9C0LJD9CM:~/code/pathreview$ pytest tests/unit/test_review_service.py -v
+================================================= test session starts ==================================================
+platform linux -- Python 3.11.15, pytest-9.1.1, pluggy-1.6.0 -- /home/rociodv/anaconda3/envs/ai201/bin/python3.11
+cachedir: .pytest_cache
+hypothesis profile 'default'
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /mnt/d/code/pathreview
+configfile: pyproject.toml
+plugins: anyio-4.14.2, asyncio-1.4.0, hypothesis-6.156.6, cov-7.1.0, pytest_httpserver-1.1.5, benchmark-5.2.3
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 19 items
+
+tests/unit/test_review_service.py::TestReviewService::test_create_review_returns_review_with_pending_status PASSED [  5%]
+tests/unit/test_review_service.py::TestReviewService::test_get_review_returns_review_for_correct_owner PASSED    [ 10%]
+tests/unit/test_review_service.py::TestReviewService::test_get_review_returns_none_for_wrong_user PASSED         [ 15%]
+tests/unit/test_review_service.py::TestReviewService::test_list_reviews_returns_paginated_results PASSED         [ 21%]
+tests/unit/test_review_service.py::TestReviewService::test_list_reviews_page_2_returns_correct_offset PASSED     [ 26%]
+tests/unit/test_review_service.py::TestReviewService::test_list_reviews_returns_tuple PASSED                     [ 31%]
+tests/unit/test_review_service.py::TestReviewService::test_create_review_calls_db_add PASSED                     [ 36%]
+tests/unit/test_review_service.py::TestReviewService::test_create_review_calls_db_commit PASSED                  [ 42%]
+tests/unit/test_review_service.py::TestReviewService::test_create_review_calls_db_refresh PASSED                 [ 47%]
+tests/unit/test_review_service.py::TestReviewService::test_get_review_uses_select_and_join PASSED                [ 52%]
+tests/unit/test_review_service.py::TestReviewService::test_list_reviews_default_pagination PASSED                [ 57%]
+tests/unit/test_review_service.py::TestReviewService::test_list_reviews_custom_page_size PASSED                  [ 63%]
+tests/unit/test_review_service.py::TestReviewService::test_create_review_with_uuid_ids PASSED                    [ 68%]
+tests/unit/test_review_service.py::TestReviewService::test_get_review_verifies_ownership PASSED                  [ 73%]
+tests/unit/test_review_service.py::TestReviewService::test_list_reviews_counts_total PASSED                      [ 78%]
+tests/unit/test_review_service.py::TestReviewService::test_list_reviews_returns_reviews_list PASSED              [ 84%]
+tests/unit/test_review_service.py::TestReviewService::test_review_sections_and_score_initially_none PASSED       [ 89%]
+tests/unit/test_review_service.py::TestReviewService::test_get_review_with_valid_uuid PASSED                     [ 94%]
+tests/unit/test_review_service.py::TestReviewService::test_list_reviews_ordered_by_created_at PASSED             [100%]
+
+=================================================== warnings summary ===================================================
+core/config.py:7
+  /mnt/d/code/pathreview/core/config.py:7: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.13/migration/
+    class Settings(BaseSettings):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================================ 19 passed, 1 warning in 0.84s =============================================
+```
+
+
+**Next steps:**
+I am running automated styling and type checker regression validations across the suite via static code tools, tracking any pre-existing mypy errors, and generating a live, public Pull Request for final evaluation.
+
+**Blockers:**
+None.
+
+---
+
+### Check-in 2 (end of week)
+
+**[PR link](https://github.com/ascherj/pathreview/pull/186)
+**[Branch](https://github.com/rdv-chio/pathreview/tree/fix/158-review-service-async-mocks)
+
+**What you built:**
+I modified the unit test configuration topology inside `tests/unit/test_review_service.py` so that the awaited database engine execution path returns a traditional synchronous `Mock` representing an active SQLAlchemy result set instead of an `AsyncMock`. This enables smooth, chained evaluation of synchronous methods like `.scalars().first()` and `.all()` inside the core service files, clearing the previous failures.
+
+**Tests added or updated:**
+Updated `tests/unit/test_review_service.py`. The modifications directly remediated the mock layout across all 13 failing unit test methods (including `test_get_review_returns_review_for_correct_owner` and `test_list_reviews_returns_paginated_results`), checking successful paths, pagination parameters, filters, and missing record scenarios.
+
+**Self-review confirmation:** [x] make check passes  [x] make test-unit passes (Note: Rerun via `pytest tests/unit -v -m unit` due to custom Conda profile environment layout).
+
+**Draft PR feedback received from:** none
