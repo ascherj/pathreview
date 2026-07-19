@@ -18,7 +18,33 @@ class TestReadmeScorer:
         """Test README with all quality signals returns high score."""
         readme = """
         # Project Name
-        A comprehensive project description.
+        A comprehensive project description. A comprehensive project description.
+        A comprehensive project description. A comprehensive project description.
+        A comprehensive project description. A comprehensive project description.
+        This project is a state-of-the-art solution designed to address complex
+        software development problems. By implementing this framework, developers
+        can expect a significant increase in efficiency, codebase maintainability,
+        and overall performance. The design of this software centers around clean
+        architecture principles, robust design patterns, and extensive test coverage.
+        Each component is loosely coupled, enabling high testability and flexibility.
+        We provide extensive documentation and support to ensure a seamless integration
+        experience for teams of all sizes. Furthermore, our active community of developers
+        is constantly contributing new improvements, extensions, and bug fixes.
+        Whether you are working on a small prototype or a large-scale enterprise
+        application, this tool scales with your needs and integrates perfectly into
+        modern CI/CD pipelines. This sentence is added to ensure that we exceed
+        the required word count limit of five hundred words so that the word count
+        category is classified as comprehensive. Let us repeat some more explanations
+        about features, installation, usage, troubleshooting, and architectural decisions
+        to ensure we have a truly well-documented project README file that serves as
+        an excellent model for all open source software projects in the community.
+        We describe the database schemas, the API endpoints, the middleware components,
+        and how to configure settings for different environments, such as development,
+        staging, testing, and production. We also discuss how to run the test suite,
+        how to format the code with formatting tools like black and ruff, and how to
+        verify types with mypy. Finally, we cover security practices, such as input
+        sanitization, sanitizing newline characters, role switching validation,
+        template injection defenses, and proper error handling with structured logging.
 
         ## Installation
         ```bash
@@ -46,7 +72,7 @@ class TestReadmeScorer:
 
         ## Live Demo
         [Try it here](https://demo.example.com)
-        """
+        """ * 3
 
         result = scorer.execute({"readme_content": readme})
 
