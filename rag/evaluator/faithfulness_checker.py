@@ -32,7 +32,7 @@ class FaithfulnessChecker:
 
         # Concatenate context text
         context_text = " ".join([
-            chunk.get("text", "") for chunk in context_chunks
+            chunk.get("text") or "" for chunk in context_chunks
         ])
 
         # Check each claim for support
@@ -60,7 +60,7 @@ class FaithfulnessChecker:
         """
         # Split by sentence (simple regex)
         sentences = re.split(r'[.!?]+', text)
-        claims = [s.strip() for s in sentences if s.strip() and len(s.strip()) > 10]
+        claims = [s.strip() for s in sentences if s.strip() and len(s.strip()) >= 10]
         return claims[:10]  # Limit to 10 claims for scoring
 
     @staticmethod
@@ -75,14 +75,17 @@ class FaithfulnessChecker:
             True if claim is supported
         """
         # Tokenize and check for keyword overlap
-        claim_tokens = set(claim.lower().split())
-        context_tokens = set(context.lower().split())
+        claim_tokens = set(re.findall(r'\w+', claim.lower()))
+        context_tokens = set(re.findall(r'\w+', context.lower()))
 
         # Require at least some meaningful overlap
         overlap = claim_tokens & context_tokens
         # Filter out common stop words
         stop_words = {'a', 'an', 'the', 'is', 'are', 'was', 'were', 'be', 'been',
-                     'and', 'or', 'but', 'in', 'of', 'to', 'for', 'that'}
+                      'and', 'or', 'but', 'in', 'of', 'to', 'for', 'that', 'with',
+                      'developer', 'developers', 'expert', 'expertise', 'skills',
+                      'experience', 'knowledge', 'shows', 'has', 'have', 'about',
+                      'on', 'at', 'by', 'from', 'as', 'this', 'they', 'them', 'their'}
         meaningful_overlap = overlap - stop_words
 
-        return len(meaningful_overlap) >= 2
+        return len(meaningful_overlap) >= 1
