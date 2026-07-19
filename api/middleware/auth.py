@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Annotated
 
 import structlog
@@ -41,7 +41,7 @@ async def get_current_user(
             raise credentials_exception
 
         # Check token expiry
-        if exp is not None and datetime.utcfromtimestamp(exp) < datetime.utcnow():
+        if exp is not None and datetime.fromtimestamp(exp, tz=timezone.utc) < datetime.now(timezone.utc):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Token has expired",

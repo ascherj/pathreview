@@ -1,6 +1,6 @@
 """Ingested source model for tracking imported content."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
@@ -38,7 +38,7 @@ class IngestedSource(Base):
     )  # SHA256 hash for deduplication
     chunk_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     ingested_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=datetime.utcnow
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc)
     )
 
     # Relationships
