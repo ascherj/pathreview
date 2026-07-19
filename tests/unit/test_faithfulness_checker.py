@@ -46,7 +46,7 @@ class TestFaithfulnessChecker:
 
     def test_partial_support_returns_middle_score(self, checker):
         """Test partial support returns score between 0 and 1."""
-        feedback = "The developer shows Python expertise and Kubernetes knowledge."
+        feedback = "The developer shows Python expertise. The developer has Kubernetes knowledge."
         context_chunks = [
             {
                 "text": "Strong Python programming skills demonstrated in projects."
