@@ -20,3 +20,14 @@ I selected this issue because it is categorized as Tier 1, meaning it is strictl
 **Branch name:** fix/158-review-service-async-mocks
 **Setup confirmation:** [x] App runs locally at localhost:5173
 **Cohort ledger:** [x] Issue added to cohort ledger
+
+## Week 8 — Reproduction & solution planning
+
+**Reproduction commit link:**
+**Reproduction summary:**
+I reproduced the issue locally in my environment by running `pytest tests/unit/test_review_service.py -v`. I observed exactly 13 failures out of 19 tests, all throwing an `AttributeError` because the production code attempts to chain synchronous `.scalars().first()` and `.all()` methods onto an improperly returned asynchronous coroutine mock object.
+
+**PLAN.md link:** [Paste your GitHub link to your committed PLAN.md here]
+**Walkthrough video (recommended):** [Paste a Loom video link here if you record a quick 2-min tour of the error screen, or leave blank]
+**Blockers or open questions:**
+None. The error behavior perfectly mirrors the issue description, and the resolution path is entirely isolated to the test configuration script.
