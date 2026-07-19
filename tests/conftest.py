@@ -2,6 +2,14 @@
 
 import pytest
 
+from core.logging import configure_logging
+
+
+def pytest_configure(config):
+    """Configure logging for tests."""
+    configure_logging()
+
+
 
 @pytest.fixture
 def sample_resume_text() -> str:

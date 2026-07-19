@@ -1,7 +1,7 @@
 """BM25-based keyword search retriever."""
 
-from rank_bm25 import BM25Okapi
 import structlog
+from rank_bm25 import BM25Okapi
 
 logger = structlog.get_logger()
 
@@ -21,6 +21,11 @@ class KeywordSearcher:
             chunks: List of chunk dicts with 'text' field
         """
         self.chunks = chunks
+        if not chunks:
+            self.bm25 = None
+            logger.info("keyword_index_built", chunk_count=0)
+            return
+
         tokenized_corpus = [
             self._tokenize(chunk["text"]) for chunk in chunks
         ]
