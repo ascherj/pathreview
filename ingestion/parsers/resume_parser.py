@@ -130,12 +130,10 @@ class ResumeParser(BaseParser):
         text_lower = text.lower()
 
         for section in SECTION_HEADERS:
-            # Look for section header patterns
+            # Match section headers even with leading whitespace (common in PDF text)
             patterns = [
-                rf"^{re.escape(section)}\s*$",
-                rf"^{re.escape(section)}\s*[:|-]",
-                rf"\n{re.escape(section)}\s*$",
-                rf"\n{re.escape(section)}\s*[:|-]",
+                rf"^\s*{re.escape(section)}\s*$",
+                rf"^\s*{re.escape(section)}\s*[:|-]",
             ]
 
             for pattern in patterns:
