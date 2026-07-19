@@ -1,6 +1,6 @@
 ## Week 7 — Issue selection
 
-**Issue link:** [https://github.com/ascherj/pathreview/issues/E-14](https://github.com/ascherj/pathreview/issues/E-14)
+**Issue link:** [https://github.com/ascherj/pathreview/issues/89](https://github.com/ascherj/pathreview/issues/89)
 
 **Issue title:** API reference doc is missing the `POST /profiles` request body schema
 
