@@ -18,7 +18,7 @@ class TestReadmeScorer:
         """Test README with all quality signals returns high score."""
         readme = """
         # Project Name
-        A comprehensive project description.
+        A comprehensive project description with detailed information about the project purpose.
 
         ## Installation
         ```bash
@@ -32,20 +32,29 @@ class TestReadmeScorer:
         ```
 
         ## Features
-        - Feature 1
-        - Feature 2
-        - Feature 3
+        - Feature 1 - first major feature of the application
+        - Feature 2 - second major feature that extends functionality
+        - Feature 3 - third major feature for enhanced user experience
 
         ## Tech Stack
-        - Python 3.9
-        - FastAPI
-        - PostgreSQL
+        - Python 3.9 for backend development and API creation
+        - FastAPI for building high-performance RESTful endpoints
+        - PostgreSQL for robust and scalable data persistence
 
         ![Build Status](https://example.com/badge.svg)
         ![Coverage](https://example.com/coverage.svg)
 
         ## Live Demo
         [Try it here](https://demo.example.com)
+
+        ## Configuration
+        The application supports multiple configuration options through environment variables.
+        Set the DATABASE_URL environment variable to configure the database connection.
+        The LOG_LEVEL variable controls the verbosity of application logging.
+
+        ## Contributing
+        Contributions are welcome! Please read the contributing guidelines before submitting
+        pull requests. All contributors must follow the code of conduct.
         """
 
         result = scorer.execute({"readme_content": readme})
