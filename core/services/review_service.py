@@ -1,7 +1,7 @@
 from uuid import UUID
 import structlog
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import select, and_
 
 from core.models.review import Review
@@ -168,7 +168,7 @@ async def process_review(
         review.status = "complete"
         review.sections = [s.model_dump() for s in sections]
         review.overall_score = rag_output.get("overall_score", None)
-        review.updated_at = datetime.utcnow()
+        review.updated_at = datetime.now(timezone.utc)
 
         db.add(review)
         await db.commit()
@@ -187,7 +187,7 @@ async def process_review(
             review = result.scalars().first()
             if review:
                 review.status = "failed"
-                review.updated_at = datetime.utcnow()
+                review.updated_at = datetime.now(timezone.utc)
                 db.add(review)
                 await db.commit()
         except Exception as e:

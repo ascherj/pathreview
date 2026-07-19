@@ -1,7 +1,7 @@
 """Database seeding script to create sample users, profiles, and reviews."""
 
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from uuid import uuid4
 
 from sqlalchemy import select
@@ -124,8 +124,8 @@ async def seed_database() -> None:
                             profile_id=profile1.id,
                             status="complete",
                             overall_score=0.74,
-                            created_at=datetime.utcnow() - timedelta(days=14),
-                            updated_at=datetime.utcnow() - timedelta(days=14),
+                            created_at=datetime.now(timezone.utc) - timedelta(days=14),
+                            updated_at=datetime.now(timezone.utc) - timedelta(days=14),
                             sections=[
                                 {
                                     "section_name": "Technical Skills",
@@ -164,8 +164,8 @@ async def seed_database() -> None:
                             profile_id=profile1.id,
                             status="complete",
                             overall_score=0.81,
-                            created_at=datetime.utcnow() - timedelta(days=3),
-                            updated_at=datetime.utcnow() - timedelta(days=3),
+                            created_at=datetime.now(timezone.utc) - timedelta(days=3),
+                            updated_at=datetime.now(timezone.utc) - timedelta(days=3),
                             sections=[
                                 {
                                     "section_name": "Technical Skills",
@@ -204,8 +204,8 @@ async def seed_database() -> None:
                             profile_id=profile1.id,
                             status="failed",
                             overall_score=None,
-                            created_at=datetime.utcnow() - timedelta(hours=1),
-                            updated_at=datetime.utcnow() - timedelta(hours=1),
+                            created_at=datetime.now(timezone.utc) - timedelta(hours=1),
+                            updated_at=datetime.now(timezone.utc) - timedelta(hours=1),
                             sections=None,
                             error_message="GitHub API rate limit exceeded. Please try again later.",
                         ),
@@ -231,8 +231,8 @@ async def seed_database() -> None:
                             profile_id=profile2.id,
                             status="complete",
                             overall_score=0.58,
-                            created_at=datetime.utcnow() - timedelta(days=7),
-                            updated_at=datetime.utcnow() - timedelta(days=7),
+                            created_at=datetime.now(timezone.utc) - timedelta(days=7),
+                            updated_at=datetime.now(timezone.utc) - timedelta(days=7),
                             sections=[
                                 {
                                     "section_name": "Technical Skills",
@@ -288,8 +288,8 @@ async def seed_database() -> None:
                             profile_id=profile3.id,
                             status="complete",
                             overall_score=0.87,
-                            created_at=datetime.utcnow() - timedelta(days=21),
-                            updated_at=datetime.utcnow() - timedelta(days=21),
+                            created_at=datetime.now(timezone.utc) - timedelta(days=21),
+                            updated_at=datetime.now(timezone.utc) - timedelta(days=21),
                             sections=[
                                 {
                                     "section_name": "Technical Skills",
@@ -328,8 +328,8 @@ async def seed_database() -> None:
                             profile_id=profile3.id,
                             status="complete",
                             overall_score=0.91,
-                            created_at=datetime.utcnow() - timedelta(days=2),
-                            updated_at=datetime.utcnow() - timedelta(days=2),
+                            created_at=datetime.now(timezone.utc) - timedelta(days=2),
+                            updated_at=datetime.now(timezone.utc) - timedelta(days=2),
                             sections=[
                                 {
                                     "section_name": "Technical Skills",
