@@ -11,17 +11,14 @@ class BiasDetector:
 
     # Genuinely dismissive phrases about educational background
     DISMISSIVE_PATTERNS = [
-        r"(?:bootcamp|self-taught|online\s+course)\s+(?:education|training)\s+is\s+(?:insufficient|inadequate|lacks)",
-        r"(?:bootcamp|self-taught)\s+(?:graduates?|developers?)\s+(?:lack|missing)\s+(?:rigor|fundamentals|proper\s+training)",
-        r"(?:bootcamp|coding\s+bootcamp)\s+(?:doesn't|does\s+not)\s+prepare\s+(?:you|developers?)",
-        r"(?:self-taught|bootcamp)\s+is\s+(?:not|never)\s+(?:equal|comparable)\s+to\s+(?:university|traditional|formal)",
+        r"(?:bootcamp|self-taught|online\s+course|coding\s+bootcamp|online\s+training|self\s+taught).*(?:can't|cannot|won't|will\s+not|lack|lacks|missing|inadequate|insufficient|not\s+prepare|not\s+equal|never\s+comparable|not\s+comparable|means\s+inadequate|lacking)"
     ]
 
     # Demographic assumptions (about age, background, identity)
     DEMOGRAPHIC_PATTERNS = [
-        r"(?:young|old|aged)\s+(?:person|developer|programmer)\s+(?:can't|cannot|won't|will\s+not)",
-        r"(?:person\s+from|coming\s+from)\s+(?:poor|rich|working[\s-]?class)",
-        r"(?:immigrant|international|foreign)\s+developers?.*(?:can't|cannot|won't|struggle)",
+        r"(?:young|old|aged|age).*(?:can't|cannot|won't|will\s+not|struggle|keep\s+up|learn)",
+        r"(?:poor|rich|working[\s-]?class).*(?:can't|cannot|won't|will\s+not|struggle|succeed|afford)",
+        r"(?:immigrant|international|foreign).*(?:can't|cannot|won't|will\s+not|struggle|communicate)"
     ]
 
     @staticmethod
