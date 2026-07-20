@@ -68,4 +68,4 @@ I updated `tests/unit/test_dependency_audit_tool.py` to cover outdated dependenc
 **Draft PR feedback received from:** none
 
 **Validation notes:**
-Focused validation passed with `.venv/bin/pytest tests/unit/test_dependency_audit_tool.py tests/unit/test_orchestrator_dependency_audit.py -q`. Repo-wide validation now passes with `make check` and `make test-unit`; `make test-unit` reports 435 passed with one existing Pydantic deprecation warning.
+Focused validation passed with `.venv/bin/pytest tests/unit/test_dependency_audit_tool.py tests/unit/test_orchestrator_dependency_audit.py -q`. Repo-wide validation now passes with `make check` and `make test-unit`; `make test-unit` reports 435 passed with one existing Pydantic deprecation warning. `make test-integration` also completes successfully by reporting that no integration test files exist to run.
