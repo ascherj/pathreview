@@ -21,6 +21,11 @@ chunk genuinely covers only some of the query terms, making the assertion pass
 because the code is actually producing a mid-range partial score.
 
 **"Is this right for me?" checklist reasoning:**
+- *Tier fit vs. my skill level:* This is my first contribution to a large,
+  multi-module codebase, so I deliberately chose a **Tier 1** issue. I want to
+  build confidence with the end-to-end contribution workflow (fork, branch,
+  reproduce, fix, PR) on a low-risk change before taking on heavier logic or
+  cross-module work in a later tier.
 - *Scope:* Contained to a single test file (`tests/unit/test_relevance_scorer.py`);
   the production scorer stays untouched. Low blast radius.
 - *Reproducible:* `pytest tests/unit/test_relevance_scorer.py -q` fails on
