@@ -2,7 +2,7 @@
 
 ## Solution plan
 
-**Issue:** [#82 — Concurrent review requests for the same profile can produce inconsistent results](https://github.com/jamjamgobambam/pathreview/issues/82)
+**Issue:** [#82 — Concurrent review requests for the same profile can produce inconsistent results](https://github.com/ascherj/pathreview/issues/82)
 
 ### Understand
 

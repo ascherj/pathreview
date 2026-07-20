@@ -2,7 +2,7 @@
 
 ## Week 7 — Issue selection
 
-**Issue link:** https://github.com/jamjamgobambam/pathreview/issues/82
+**Issue link:** https://github.com/ascherj/pathreview/issues/82
 
 **Issue title:** Concurrent review requests for the same profile can produce inconsistent results
 
