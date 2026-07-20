@@ -7,10 +7,10 @@
 **Tier:** [x] Tier 1  [ ] Tier 2  [ ] Tier 3
 
 **Problem summary:**
-(3–5 sentences)
+The faithfulness checker currently prevents short claims from being marked as supported, even when there is sufficient evidence. This results in valid short claims being incorrectly classified as unsupported. The issue appears to be in the evaluation logic rather than the retrieval of evidence. A successful fix will allow short claims to be evaluated fairly while maintaining the existing validation process.
 
 **Branch name:** fix/152-short-claims-faithfulness
 
 **Setup confirmation:** [x] App runs locally at localhost:5173
 
-**Cohort ledger:** [x] Issue added to cohort ledger
+**Cohort ledger:** [ ] Issue added to cohort ledger
