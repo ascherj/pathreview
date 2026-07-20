@@ -30,9 +30,9 @@ class FaithfulnessChecker:
             logger.info("faithfulness_no_claims_extracted")
             return 0.5  # Default to neutral if no extractable claims
 
-        # Concatenate context text
+        # Concatenate context text (ignore chunks with missing/None text)
         context_text = " ".join([
-            chunk.get("text", "") for chunk in context_chunks
+            str(chunk.get("text") or "") for chunk in context_chunks
         ])
 
         # Check each claim for support
@@ -85,4 +85,10 @@ class FaithfulnessChecker:
                      'and', 'or', 'but', 'in', 'of', 'to', 'for', 'that'}
         meaningful_overlap = overlap - stop_words
 
-        return len(meaningful_overlap) >= 2
+        # Short factual claims may only share one meaningful token with the
+        # supporting context (e.g. "Knows Python." vs "python expert"). Treat
+        # single-token overlaps as supported for short claims; keep the
+        # stricter two-token rule for longer, more specific claims.
+        claim_word_count = len([t for t in claim.lower().split() if t not in stop_words])
+        required_overlap = 1 if claim_word_count <= 3 else 2
+        return len(meaningful_overlap) >= required_overlap
