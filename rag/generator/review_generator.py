@@ -186,23 +186,69 @@ class ReviewGenerator:
         return section
 
     @staticmethod
-    def _consolidate_feedback(sections: list[FeedbackSection]) -> list[FeedbackSection]:
-        """Consolidate duplicate feedback across similar sections.
+    def _content_similarity(a: str, b: str) -> float:
+        """Jaccard similarity between two texts on their word sets.
+
+        Args:
+            a: First text
+            b: Second text
+
+        Returns:
+            Similarity in 0.0-1.0 (1.0 = identical word sets, 0.0 = disjoint)
+        """
+        tokens_a = set(a.lower().split())
+        tokens_b = set(b.lower().split())
+        if not tokens_a and not tokens_b:
+            return 1.0
+        union = tokens_a | tokens_b
+        if not union:
+            return 0.0
+        return len(tokens_a & tokens_b) / len(union)
+
+    @staticmethod
+    def _consolidate_feedback(
+        sections: list[FeedbackSection], similarity_threshold: float = 0.8
+    ) -> list[FeedbackSection]:
+        """Consolidate near-duplicate feedback across sections.
+
+        When a user has several projects in the same tech stack, the generator
+        can emit near-identical observations in different sections. This keeps the
+        first occurrence of each distinct piece of feedback and folds any duplicate
+        section's suggestions into it, rather than repeating the same content.
 
         Args:
             sections: List of feedback sections
+            similarity_threshold: Word-overlap ratio (0-1) at or above which two
+                sections are treated as duplicates.
 
         Returns:
-            Consolidated list of sections
+            Consolidated list of sections with duplicates merged.
         """
-        # Simple consolidation: if two sections mention the same project,
-        # merge the feedback
-        seen = set()
-        consolidated = []
+        consolidated: list[FeedbackSection] = []
 
         for section in sections:
-            if section.section_name not in seen:
+            duplicate_of = None
+            for kept in consolidated:
+                if (
+                    ReviewGenerator._content_similarity(section.content, kept.content)
+                    >= similarity_threshold
+                ):
+                    duplicate_of = kept
+                    break
+
+            if duplicate_of is None:
                 consolidated.append(section)
-                seen.add(section.section_name)
+            else:
+                # Fold the duplicate's suggestions into the kept section,
+                # preserving order and dropping repeats.
+                merged = list(
+                    dict.fromkeys(duplicate_of.suggestions + section.suggestions)
+                )
+                duplicate_of.suggestions = merged
+                logger.info(
+                    "duplicate_feedback_consolidated",
+                    dropped_section=section.section_name,
+                    kept_section=duplicate_of.section_name,
+                )
 
         return consolidated
