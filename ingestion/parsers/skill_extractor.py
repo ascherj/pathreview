@@ -170,22 +170,86 @@ class SkillExtractor:
                 evidence=python_evidence,
             )
 
-        # JavaScript/TypeScript detection
+        # JavaScript/TypeScript detection (works from body text, not only filenames)
+        filename_lower = str(filename or "").lower()
         js_evidence = []
-        if ".js" in str(filename or "").lower():
-            js_evidence.append("JavaScript file extension (.js)")
-        if ".ts" in str(filename or "").lower():
-            js_evidence.append("TypeScript file extension (.ts)")
-        if re.search(r"\b(import|require)\s+", text):
-            js_evidence.append("CommonJS or ES6 imports")
+        ts_evidence = []
+
+        if re.search(r"\.(jsx?|mjs|cjs)\b", filename_lower) or re.search(
+            r"\.(jsx?|mjs|cjs)\b", text_lower
+        ):
+            js_evidence.append("JavaScript file extension")
+        if re.search(r"\.(tsx?|mts|cts)\b", filename_lower) or re.search(
+            r"\.(tsx?|mts|cts)\b", text_lower
+        ):
+            ts_evidence.append("TypeScript file extension")
+
+        # CommonJS / Node idioms
+        if re.search(r"\brequire\s*\(", text) or re.search(r"\bmodule\.exports\b", text):
+            js_evidence.append("CommonJS require/module.exports")
+        if re.search(r"\bconsole\.(log|error|warn)\b", text):
+            js_evidence.append("console.* usage")
+        if re.search(r"\b(const|let|var)\s+\w+", text) and re.search(
+            r"(=>|function\s*\()", text
+        ):
+            js_evidence.append("JS variable + function/arrow syntax")
+        if re.search(r"\basync\s*/\s*await\b", text_lower) or (
+            "async/await" in text_lower
+        ):
+            js_evidence.append("async/await callbacks")
+        if "arrow functions" in text_lower:
+            js_evidence.append("arrow functions mention")
         if "package.json" in text_lower:
             js_evidence.append("package.json found")
+        if re.search(r"\bjavascript\b", text_lower):
+            js_evidence.append("JavaScript named in text")
 
-        if js_evidence:
-            confidence = min(0.95, 0.6 + len(js_evidence) * 0.1)
-            lang = "TypeScript" if ".ts" in str(filename or "").lower() else "JavaScript"
-            skills_dict[lang] = SkillDetection(
-                name=lang,
+        # TypeScript-specific signals
+        if re.search(r"\btypescript\b", text_lower):
+            ts_evidence.append("TypeScript named in text")
+        if re.search(r"\b(interface|type)\s+[A-Z]\w*", text):
+            ts_evidence.append("TypeScript interface/type declarations")
+        if re.search(r":\s*Promise\s*<", text) or re.search(
+            r"\bPromise\s*<\s*\w+", text
+        ):
+            ts_evidence.append("Promise<> type usage")
+        if re.search(r"\bexport\s+(interface|type|class|const|function)\b", text):
+            # export alone is weak for JS; with TS keywords it counts for TS
+            if ts_evidence or re.search(r"\b(interface|type)\b", text):
+                ts_evidence.append("TypeScript export declarations")
+            else:
+                js_evidence.append("ES module exports")
+        es_import = re.search(r'\bimport\s+.+\s+from\s+[\'\"]', text)
+        py_from_import = re.search(r"\bfrom\s+\w+\s+import\b", text)
+        if es_import and not py_from_import:
+            # ES import ... from 'x' (not Python "from x import")
+            if ts_evidence:
+                ts_evidence.append("ES module imports")
+            else:
+                js_evidence.append("ES module imports")
+
+        # Prefer TypeScript when TS signals exist; also surface JS if both present
+        if ts_evidence:
+            confidence = min(0.95, 0.55 + len(ts_evidence) * 0.1)
+            skills_dict["TypeScript"] = SkillDetection(
+                name="TypeScript",
+                category="Language",
+                confidence=confidence,
+                evidence=ts_evidence,
+            )
+        if js_evidence and "TypeScript" not in skills_dict:
+            confidence = min(0.95, 0.55 + len(js_evidence) * 0.1)
+            skills_dict["JavaScript"] = SkillDetection(
+                name="JavaScript",
+                category="Language",
+                confidence=confidence,
+                evidence=js_evidence,
+            )
+        elif js_evidence and "TypeScript" in skills_dict:
+            # TS projects almost always imply JS family knowledge
+            confidence = min(0.9, 0.5 + len(js_evidence) * 0.1)
+            skills_dict["JavaScript"] = SkillDetection(
+                name="JavaScript",
                 category="Language",
                 confidence=confidence,
                 evidence=js_evidence,
@@ -274,3 +338,22 @@ class SkillExtractor:
                         confidence=confidence,
                         evidence=[f"Found '{tool}' reference in content"],
                     )
+
+        # Dockerfile / Compose markers without the literal word "docker"
+        docker_markers = bool(
+            re.search(r"^\s*FROM\s+\S+", text, re.M)
+            or re.search(r"^\s*EXPOSE\s+\d+", text, re.M)
+            or re.search(r"^\s*services:\s*$", text, re.M)
+            or "docker-compose" in text_lower
+            or (
+                re.search(r"version:\s*['\"]?3(\.\d+)?['\"]?", text_lower)
+                and "services:" in text_lower
+            )
+        )
+        if docker_markers and "Docker" not in skills_dict:
+            skills_dict["Docker"] = SkillDetection(
+                name="Docker",
+                category="Tool",
+                confidence=0.9,
+                evidence=["Dockerfile or Compose markers"],
+            )
