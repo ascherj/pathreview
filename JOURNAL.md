@@ -23,3 +23,18 @@ When two review requests come in for the same profile at almost the same time, b
 **Setup confirmation:** [x] App runs locally at localhost:5173
 
 **Cohort ledger:** [x] Issue added to cohort ledger
+
+## Week 8 — Reproduction & solution planning
+
+**Reproduction commit link:** https://github.com/janellycedenoaquino/pathreview/commit/944628f
+
+**Reproduction summary:**
+Wrote an integration test (`tests/integration/test_review_service.py`) that runs two `process_review` calls concurrently for the same profile, patching the agent-orchestration step to take a fixed 0.3s so overlap is deterministic. The test asserts the second review only starts processing after the first finishes -- this currently fails (both start before either finishes), confirming `process_review` has no per-profile lock.
+
+**PLAN.md link:** https://github.com/janellycedenoaquino/pathreview/blob/fix/82-concurrent-review-race-condition/PLAN.md
+
+**Walkthrough video (recommended):** [not recorded yet]
+
+**Blockers or open questions:**
+- Still deciding between two ways to hold the Postgres advisory lock across `process_review`'s pipeline: consolidate its several intermediate `db.commit()` calls into one final commit (bigger change), vs. use session-scoped `pg_advisory_lock`/`pg_advisory_unlock` explicitly with a `finally` release (smaller change, more manual bookkeeping). Leaning toward the latter but not settled.
+- Found two pre-existing bugs unrelated to #82 while building the reproduction: `core/services/review_service.py` fails `mypy` on `main` independent of any of my changes, and `_run_ingestion_pipeline` passes a `raw_data` kwarg that doesn't exist on the `IngestedSource` model (silently swallowed, so ingestion never actually writes rows today). Neither blocks the Week 9 fix, but flagging in case a mentor wants these reported separately.
