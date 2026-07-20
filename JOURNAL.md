@@ -14,6 +14,6 @@ I selected this issue because it is a Tier 1 issue with a limited and clearly de
 
 **Branch name:** fix/68-safety-event-count-health-check
 
-**Setup confirmation:** [ ] App runs locally at localhost:5173
+**Setup confirmation:** [x] App runs locally at localhost:5173
 
-**Cohort ledger:** [ ] Issue added to cohort ledger
+**Cohort ledger:** [x] Issue added to cohort ledger
