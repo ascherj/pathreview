@@ -30,22 +30,23 @@ Expected files to touch:
 
 Inputs:
 
-- A dictionary passed to `DependencyAuditTool.execute()`.
+- `DependencyAuditTool.execute(input_data: dict)` should accept a dictionary with dependency file contents, for example `{"files": {"requirements.txt": "fastapi==0.90.0", "package.json": "{...}"}}`.
 - Supported dependency file contents keyed by filename, such as `requirements.txt`, `package.json`, or `pyproject.toml`.
-- A latest-version source or injected mapping for tests, such as `{"react": "19.0.0", "fastapi": "0.115.0"}`.
+- A latest-version source or injected mapping for tests, such as `{"react": "19.0.0", "fastapi": "0.115.0"}`, so `tests/unit/test_dependency_audit_tool.py` can run without network access.
 
 Outputs:
 
-- A `ToolResult` with `success=True` when parsing completes.
-- A data payload containing audited dependencies, flagged outdated dependencies, unsupported or skipped files, and any non-fatal parsing warnings.
-- Findings that the orchestrator can merge into the agent's overall project review.
+- A `ToolResult` from `agent/tools/base.py` with `success=True` when parsing completes and `success=False` only for unexpected tool-level failures.
+- A data payload shaped like `{"audited_dependencies": [...], "outdated_dependencies": [...], "skipped_files": [...], "warnings": [...]}`.
+- Each outdated dependency finding should include the package name, source file, declared version, latest known version, and the major-version gap.
+- Findings that `agent/orchestrator.py` can merge into the agent's overall project review under a `dependency_audit` tool result.
 
 ### Risks & unknowns
 
-- `agent/orchestrator.py` currently receives file paths through `profile_data["files"]`, but issue #53 requires parsing file contents. I need to confirm where repository file contents are available or whether `github_tool` output should feed this tool.
-- Live package registry calls could make tests slow or flaky. I plan to keep version lookup injectable and mock it in unit tests.
-- Python dependency parsing can include version ranges, extras, comments, environment markers, and unpinned packages. The first implementation should handle common pinned/ranged cases gracefully and skip ambiguous cases with a warning.
-- `pyproject.toml` dependencies can appear under `[project]` or tool-specific sections such as Poetry. I need to decide which sections are in scope for the first pass.
+- `agent/orchestrator.py::_build_plan()` currently receives file paths through `profile_data["files"]`, but issue #53 requires parsing file contents. I need to confirm where repository file contents are available or whether `agent/tools/github_tool.py` output should feed this tool.
+- Live package registry calls inside `agent/tools/dependency_audit_tool.py` could make tests slow or flaky. I plan to keep version lookup injectable and mock it in `tests/unit/test_dependency_audit_tool.py`.
+- Python dependency parsing in `agent/tools/dependency_audit_tool.py` can include version ranges, extras, comments, environment markers, and unpinned packages. The first implementation should handle common pinned/ranged cases gracefully and skip ambiguous cases with a warning.
+- `pyproject.toml` dependencies can appear under `[project]` or tool-specific sections such as Poetry. I need to decide which sections `DependencyAuditTool` will support in the first pass and document skipped sections in the tool output.
 
 ### Edge cases
 
