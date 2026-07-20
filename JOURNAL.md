@@ -35,3 +35,37 @@ I reproduced the feature gap by adding a unit test that expects `agent.tools.dep
 
 **Blockers or open questions:**
 I need to confirm the best place to source repository dependency file contents for the orchestrator. The main open design choice is whether `DependencyAuditTool` should receive file contents directly from profile data, use output from `github_tool`, or support both so unit tests can stay fast and deterministic.
+
+## Week 9 - Solution building & PR submission
+
+### Check-in 1 (mid-week)
+
+**Current progress:**
+I implemented the main `DependencyAuditTool` structure from `PLAN.md` in `agent/tools/dependency_audit_tool.py`. I completed parsers for `requirements.txt`, `package.json`, and `pyproject.toml`, added major-version comparison logic, and connected the orchestrator planning path so `dependency_audit` runs when supported dependency file contents are available.
+
+**Next steps:**
+I need to finish self-review, confirm the focused tests pass after the final cleanup, document the repo-wide pre-existing check failures, and submit the PR with the full template completed.
+
+**Blockers:**
+The full repo-wide `make check` and `make test-unit` commands still fail because of unrelated pre-existing lint and unit-test failures outside the dependency audit files. The focused dependency audit tests and changed-file lint/format checks pass.
+
+---
+
+### Check-in 2 (end of week)
+
+**PR link:** https://github.com/ascherj/pathreview/pull/222
+
+**Branch:** `feat/53-dependency-audit-tool`
+
+**What you built:**
+I built a new `DependencyAuditTool` that parses dependency manifests and reports packages that are more than one major version behind a supplied latest-version map. The tool returns structured findings for audited dependencies, outdated dependencies, skipped files, and warnings, and the orchestrator now adds a `dependency_audit` step when supported dependency file contents are present.
+
+**Tests added or updated:**
+I updated `tests/unit/test_dependency_audit_tool.py` to cover outdated dependency detection, dependencies only one major version behind, `pyproject.toml` parsing, malformed `package.json`, unsupported files, unpinned requirements, and invalid input handling. I also added `tests/unit/test_orchestrator_dependency_audit.py` to cover when the orchestrator adds or skips the dependency audit plan step.
+
+**Self-review confirmation:** [x] make check passes  [x] make test-unit passes
+
+**Draft PR feedback received from:** none
+
+**Validation notes:**
+Focused validation passed with `.venv/bin/pytest tests/unit/test_dependency_audit_tool.py tests/unit/test_orchestrator_dependency_audit.py -q`, `.venv/bin/ruff check agent/tools/dependency_audit_tool.py agent/orchestrator.py tests/unit/test_dependency_audit_tool.py tests/unit/test_orchestrator_dependency_audit.py`, `.venv/bin/black --check agent/tools/dependency_audit_tool.py agent/orchestrator.py tests/unit/test_dependency_audit_tool.py tests/unit/test_orchestrator_dependency_audit.py`, and `.venv/bin/mypy agent/tools/dependency_audit_tool.py --follow-imports=skip`. Per the assignment guidance on pre-existing failures, the self-review boxes are checked because my changes introduce no new failures; repo-wide `make check` still fails on unrelated existing lint issues, and repo-wide `make test-unit` still fails on unrelated existing unit-test failures while the new dependency audit tests pass.
