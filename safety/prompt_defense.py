@@ -12,7 +12,7 @@ class PromptDefense:
     # Patterns indicating prompt injection attempts
     INJECTION_PATTERNS = [
         r"\n\s*---+\s*\n",  # Separator line
-        r"\n\s*(?:System|Human|Assistant):",  # Role switching
+        r"\n\s*(?:System|Human|Assistant)\s*:",  # Role switching (tolerate whitespace before colon)
         r"{{.*?}}",  # Template injection
         r"{%.*?%}",  # Jinja-like injection
         r"\n\s*(?:Ignore|Forget|Disregard|Override)",  # Explicit instructions to ignore
