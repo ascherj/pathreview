@@ -155,6 +155,21 @@ class TechDetector(BaseTool):
         Returns:
             True if file should be skipped
         """
+        # Normalize so `node_modules/...`, `vendor/...`, `build/...` at the
+        # repo root are skipped too, not only when they appear mid-path.
+        norm = filepath.lstrip("./")
+        skip_prefixes = (
+            "node_modules/",
+            "vendor/",
+            "dist/",
+            "build/",
+            ".git/",
+            "__pycache__/",
+            ".venv/",
+            "venv/",
+        )
+        if norm.startswith(skip_prefixes):
+            return True
         skip_patterns = [
             "/node_modules/",
             "/vendor/",
@@ -165,5 +180,4 @@ class TechDetector(BaseTool):
             "/.venv/",
             "/venv/",
         ]
-
         return any(pattern in filepath for pattern in skip_patterns)
