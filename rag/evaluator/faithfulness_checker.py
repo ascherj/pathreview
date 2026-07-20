@@ -67,7 +67,7 @@ class FaithfulnessChecker:
             # Split coordinated clauses first
             for clause in re.split(r'\s+(?:and|or|but)\s+', sentence, flags=re.IGNORECASE):
                 clause = clause.strip()
-                if not clause or len(clause) <= 10:
+                if not clause or len(clause) < 5:
                     continue
                 # Split comma-separated technology lists into individual claims
                 if "," in clause:
