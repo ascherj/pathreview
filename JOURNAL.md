@@ -31,7 +31,7 @@ I reproduced the feature gap by adding a unit test that expects `agent.tools.dep
 
 **PLAN.md link:** https://github.com/SharadhaK30/pathreview/blob/feat/53-dependency-audit-tool/PLAN.md
 
-**Walkthrough video (recommended):** Not recorded yet.
+**Walkthrough video :** Loom Link attached to Notes section in Project Submission
 
 **Blockers or open questions:**
 I need to confirm the best place to source repository dependency file contents for the orchestrator. The main open design choice is whether `DependencyAuditTool` should receive file contents directly from profile data, use output from `github_tool`, or support both so unit tests can stay fast and deterministic.
