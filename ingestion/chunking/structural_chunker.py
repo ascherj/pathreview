@@ -39,6 +39,10 @@ class StructuralChunker(BaseChunker):
         sections = self._extract_sections(text)
 
         chunks = []
+        if not sections:
+            # No headings: fall back to a single section so the document is
+            # indexed instead of silently dropped. Preserve hierarchy as empty.
+            sections = [{"content": text.strip(), "path": [], "level": 0}]
         for section in sections:
             heading_path = " > ".join(section["path"])
             section_text = section["content"]
