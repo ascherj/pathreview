@@ -107,12 +107,15 @@ class TechDetector(BaseTool):
 
         languages = set()
         frameworks = set()
+        lang_counts = {}
 
-        # Detect by file extension
+        # Detect by file extension (skip vendored/build paths)
         for filepath in filtered_files:
             for ext, lang in self.EXT_TO_LANG.items():
                 if filepath.endswith(ext):
                     languages.add(lang)
+                    lang_counts[lang] = lang_counts.get(lang, 0) + 1
+                    break
 
         # Detect by config files
         for filepath in filtered_files:
@@ -122,11 +125,13 @@ class TechDetector(BaseTool):
                     if framework not in ("Docker", "Infrastructure", "CI/CD", "Build"):
                         frameworks.add(framework)
 
-        # Determine primary language (most common)
+        # Determine primary language (most common among non-skipped files)
         primary = "Unknown"
-        if languages:
-            lang_list = sorted(languages)
-            primary = lang_list[0]
+        if lang_counts:
+            primary = max(lang_counts.items(), key=lambda kv: (kv[1], kv[0]))[0]
+        elif languages:
+            # only config hints, no source files
+            primary = sorted(languages)[0]
 
         all_languages = sorted(languages)
         all_frameworks = sorted(frameworks)
@@ -150,6 +155,21 @@ class TechDetector(BaseTool):
         Returns:
             True if file should be skipped
         """
+        # Normalize so `node_modules/...`, `vendor/...`, `build/...` at the
+        # repo root are skipped too, not only when they appear mid-path.
+        norm = filepath.lstrip("./")
+        skip_prefixes = (
+            "node_modules/",
+            "vendor/",
+            "dist/",
+            "build/",
+            ".git/",
+            "__pycache__/",
+            ".venv/",
+            "venv/",
+        )
+        if norm.startswith(skip_prefixes):
+            return True
         skip_patterns = [
             "/node_modules/",
             "/vendor/",
@@ -160,5 +180,4 @@ class TechDetector(BaseTool):
             "/.venv/",
             "/venv/",
         ]
-
         return any(pattern in filepath for pattern in skip_patterns)
