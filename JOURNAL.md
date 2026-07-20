@@ -38,3 +38,16 @@ Wrote an integration test (`tests/integration/test_review_service.py`) that runs
 **Blockers or open questions:**
 - Still deciding between two ways to hold the Postgres advisory lock across `process_review`'s pipeline: consolidate its several intermediate `db.commit()` calls into one final commit (bigger change), vs. use session-scoped `pg_advisory_lock`/`pg_advisory_unlock` explicitly with a `finally` release (smaller change, more manual bookkeeping). Leaning toward the latter but not settled.
 - Found two pre-existing bugs unrelated to #82 while building the reproduction: `core/services/review_service.py` fails `mypy` on `main` independent of any of my changes, and `_run_ingestion_pipeline` passes a `raw_data` kwarg that doesn't exist on the `IngestedSource` model (silently swallowed, so ingestion never actually writes rows today). Neither blocks the Week 9 fix, but flagging in case a mentor wants these reported separately.
+
+## Week 9 — Solution building & PR submission
+
+### Check-in 1 (mid-week)
+
+**Current progress:**
+All five `PLAN.md` sub-tasks are done. Added `_acquire_profile_lock`, which acquires a Postgres advisory lock (`pg_advisory_xact_lock`, keyed on `profile_id` via `hashtext()`) in `process_review` right after the existing "processing" status commit. Resolved the multi-commit/lock-scope conflict flagged in Week 8 by removing the internal `db.commit()` inside `_run_ingestion_pipeline`, so the transaction-scoped lock now spans the whole ingestion → agent → RAG → safety pipeline through to a single terminal commit. The Week 8 reproduction test now passes with no changes to the test itself, and I added a second test confirming the lock is scoped per-profile (different profiles don't block each other). Ran `make check`/`make test-unit` before and after the change and diffed the failure lists to confirm zero new regressions. Opened a draft PR for early feedback: https://github.com/ascherj/pathreview/pull/229
+
+**Next steps:**
+Share the draft PR in the cohort feedback channel. Once I've either incorporated feedback or decided I'm satisfied without any, mark it ready for review and complete Check-in 2 with the final PR link.
+
+**Blockers:**
+None blocking my own progress. For context (not blocking): the repo has some pre-existing issues unrelated to #82 -- `core/services/review_service.py` fails `mypy` independent of this change, `make check`'s lint step has ~181 pre-existing ruff errors repo-wide in files this PR doesn't touch, and `tests/unit` has 53 pre-existing failures (confirmed identical before/after). All documented in the PR description under "Pre-existing issues."
