@@ -30,9 +30,9 @@ class FaithfulnessChecker:
             logger.info("faithfulness_no_claims_extracted")
             return 0.5  # Default to neutral if no extractable claims
 
-        # Concatenate context text
+        # Concatenate context text (ignore chunks with missing/None text)
         context_text = " ".join([
-            chunk.get("text", "") for chunk in context_chunks
+            str(chunk.get("text") or "") for chunk in context_chunks
         ])
 
         # Check each claim for support
@@ -58,9 +58,32 @@ class FaithfulnessChecker:
         Returns:
             List of claims (sentences)
         """
-        # Split by sentence (simple regex)
+        # Split by sentence and by coordinating conjunctions so compound
+        # feedback ("Python expertise and Kubernetes knowledge") yields
+        # independently supported claims instead of one all-or-nothing claim.
         sentences = re.split(r'[.!?]+', text)
-        claims = [s.strip() for s in sentences if s.strip() and len(s.strip()) > 10]
+        claims = []
+        for sentence in sentences:
+            # Split coordinated clauses first
+            for clause in re.split(r'\s+(?:and|or|but)\s+', sentence, flags=re.IGNORECASE):
+                clause = clause.strip()
+                if not clause or len(clause) <= 10:
+                    continue
+                # Split comma-separated technology lists into individual claims
+                if "," in clause:
+                    head, *rest = [c.strip() for c in clause.split(",")]
+                    if head and len(head) > 10:
+                        claims.append(head)
+                    for part in rest:
+                        # keep only substantial fragments
+                        if len(part) > 3 and not part.lower().startswith(("and ", "or ")):
+                            claims.append(part)
+                        elif part.lower().startswith(("and ", "or ")):
+                            part = part[4:].strip()
+                            if len(part) > 3:
+                                claims.append(part)
+                else:
+                    claims.append(clause)
         return claims[:10]  # Limit to 10 claims for scoring
 
     @staticmethod
@@ -84,5 +107,13 @@ class FaithfulnessChecker:
         stop_words = {'a', 'an', 'the', 'is', 'are', 'was', 'were', 'be', 'been',
                      'and', 'or', 'but', 'in', 'of', 'to', 'for', 'that'}
         meaningful_overlap = overlap - stop_words
+        meaningful_claim = {t for t in claim_tokens if t not in stop_words}
 
-        return len(meaningful_overlap) >= 2
+        # A claim is supported when it shares at least one meaningful token
+        # with the context. Longer claims need proportionally more overlap so
+        # vague feedback doesn't score fully supported.
+        if not meaningful_claim:
+            return False
+        if len(meaningful_claim) <= 3:
+            return len(meaningful_overlap) >= 1
+        return len(meaningful_overlap) / len(meaningful_claim) >= 0.2
