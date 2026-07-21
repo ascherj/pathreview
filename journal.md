@@ -8,7 +8,7 @@
 **Tier:** [ O ] Tier 1  [  ] Tier 2  [  ] Tier 3
 
 **Problem summary:**
-[the api.md file contains information about the endpoints but there is no mention of examples to call it. This issue causes users to be unable to easily test that the api is working as intended.]
+[the api.md file contains information about the endpoints but there is no mention of examples to call it. This issue causes users to be unable to easily test that the api is working as intended. After I fix the issue the documentation should have the updated curl commands so that users can validate the api easily.]
 
 **Branch name:** [docs/117-add-example-curl]
 
