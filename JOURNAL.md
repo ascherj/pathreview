@@ -50,7 +50,7 @@ sequenceDiagram
     Note over A,B: call_order = [A_start(1), B_start(3), B_end(6), A_end(9)]<br/>Result: inconsistent profile state<br/>Step 8 can silently overwrite or ignore step 5's edits
 ```
 
-**What the diagram shows:** Request A begins first and holds an in-memory `Profile` snapshot across several `await` points (ingestion, orchestration, RAG, safety checks). Because nothing keys off `profile_id`, Request B is free to start, run to completion, and commit its own changes while A is still suspended mid-pipeline. When A eventually resumes and commits, it does so against its now-stale snapshot, producing the interleaved `["A_start", "B_start", "B_end", "A_end"]` order the regression test asserts against. A per-profile lock would force B to wait until A releases the lock, guaranteeing one of the two non-interleaved orders instead.
+**What the diagram shows:** Request A begins first and holds an in-memory `Profile` snapshot across several `await` points (ingestion, orchestration, RAG, safety checks). Since nothing keys off `profile_id`, Request B is free to start, run to completion, and commit its own changes while A is still suspended mid-pipeline. When A eventually resumes and commits, it does so against its now stale snapshot, producing the interleaved `["A_start", "B_start", "B_end", "A_end"]` order the regression test asserts against. A per-profile lock would force B to wait until A releases the lock, guaranteeing one of the two non-interleaved orders instead.
 
 ## How to Reproduce
 
@@ -85,4 +85,18 @@ AssertionError: expected non-interleaved execution, got ['A_start', 'B_start', '
 
 Review B starts and *completes entirely* while review A is still mid-flight, still holding a profile snapshot from before review B's own edit & submit sequence landed. There is no lock forcing one loop to wait for the other; the two loops for the same `profile_id` simply race.
 
-**Expected result once fixed:** a per-profile lock must serialize the two loops so `call_order` comes back as either `["A_start", "A_end", "B_start", "B_end"]` or `["B_start", "B_end", "A_start", "A_end"]` -- one loop fully finishing (and releasing its per-profile lock) before the other is allowed to begin. The test asserts exactly this.
+**Expected result once fixed:** a per-profile lock must serialize the two loops so `call_order` comes back as either `["A_start", "A_end", "B_start", "B_end"]` or `["B_start", "B_end", "A_start", "A_end"]`, one loop fully finishing (and releasing its per-profile lock) before the other is allowed to begin. The test asserts exactly this.
+
+## Week 8 — Reproduction & solution planning
+
+**Reproduction commit link:** [4fdd789](https://github.com/DasEd955/pathreview/commit/4fdd789e6873107519a7a3636470dbbfe868945f)
+
+**Reproduction summary:**
+
+I reproduced the issue by simulating concurrency and latency: two `process_review()` calls are kicked off for the same `profile_id`, with review A's ingestion step monkeypatched to pause mid-flight while review B runs to completion in that window, then A resumes and finishes. Since nothing keys off `profile_id`, the two calls interleave freely against the shared profile state instead of running serially, and the regression test I wrote codifies this bug by asserting `call_order` against the non-interleaved orders.
+
+**PLAN.md link:** [PLAN.md](https://github.com/DasEd955/pathreview/blob/fix/82-concurrent-review-locking/PLAN.md)
+
+**Blockers or open questions:**
+
+None at this moment, but I'm eager to sanity check once the fix is implemented whether I considered enough edge cases and whether my prework analysis was thorough enough.
