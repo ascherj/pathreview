@@ -1,4 +1,4 @@
-## Week 7 — Issue selection
+## Week 7 — Issue Selection
 
 **Issue link:** [https://github.com/ascherj/pathreview/issues/82]
 
@@ -24,3 +24,65 @@ I am treating Tier 3 as a realistic fit given my current experience. I work as a
 **Setup confirmation:** [ X ] App runs locally at localhost:5173
 
 **Cohort ledger:** [ X ] Issue added to cohort ledger
+
+## Issue Visualization
+
+```mermaid
+sequenceDiagram
+    participant A as Request A<br/>process_review(profile_id=1)
+    participant DB as Profile (shared state)
+    participant B as Request B<br/>process_review(profile_id=1)
+
+    A->>DB: 1. A_start: read Profile snapshot
+    activate A
+    Note over A: 2. A awaits mid-pipeline<br/>(ingestion -> orchestration, no lock held)
+    B->>DB: 3. B_start: read Profile snapshot
+    activate B
+    Note over B: 4. B edits Profile, runs full pipeline
+    B->>DB: 5. B commits changes
+    B-->>B: 6. B_end: review complete
+    deactivate B
+    Note over A: 7. A resumes using STALE<br/>snapshot from before step 5
+    A->>DB: 8. A commits changes (based on stale data)
+    A-->>A: 9. A_end: review complete
+    deactivate A
+
+    Note over A,B: call_order = [A_start(1), B_start(3), B_end(6), A_end(9)]<br/>Result: inconsistent profile state<br/>Step 8 can silently overwrite or ignore step 5's edits
+```
+
+**What the diagram shows:** Request A begins first and holds an in-memory `Profile` snapshot across several `await` points (ingestion, orchestration, RAG, safety checks). Because nothing keys off `profile_id`, Request B is free to start, run to completion, and commit its own changes while A is still suspended mid-pipeline. When A eventually resumes and commits, it does so against its now-stale snapshot, producing the interleaved `["A_start", "B_start", "B_end", "A_end"]` order the regression test asserts against. A per-profile lock would force B to wait until A releases the lock, guaranteeing one of the two non-interleaved orders instead.
+
+## How to Reproduce
+
+**Root cause:** `process_review()` in `core/services/review_service.py` fetches its own `Profile` snapshot, then runs a multi-step pipeline (ingestion → agent orchestration → RAG → safety checks) with several `await` points and `db.commit()` calls in between. Nothing keys off `profile_id` to prevent two calls from running concurrently, so two review requests submitted for the same profile close together interleave freely against shared profile state instead of being serialized.
+
+The regression test at [`tests/integration/test_review_concurrency.py`](tests/integration/test_review_concurrency.py) pins this down deterministically (no flaky timing races) by monkeypatching the ingestion step of two concurrent `process_review()` calls to record when each starts/finishes, and forcing review A to pause mid-flight while review B's profile edit and full run land in between.
+
+To reproduce it yourself, from the repo root:
+
+```bash
+# 1. Start the real Postgres the app uses (docker-compose.yml service is named `db`,
+#    mapped to host port 5433)
+docker compose up -d db
+
+# 2. Point the app at it (matches .env.example)
+export DATABASE_URL="postgresql+asyncpg://pathreview:pathreview@localhost:5433/pathreview_dev"
+
+# 3. Apply migrations so the schema exists
+make migrate
+
+# 4. Run the regression test directly -- on unfixed code this FAILS
+.venv/Scripts/pytest tests/integration/test_review_concurrency.py -v -m integration
+```
+
+(On macOS/Linux, use `.venv/bin/pytest` per the Makefile's `VENV_BIN` convention.)
+
+**Expected result on current, unfixed code:** the test fails with
+
+```
+AssertionError: expected non-interleaved execution, got ['A_start', 'B_start', 'B_end', 'A_end']
+```
+
+Review B starts and *completes entirely* while review A is still mid-flight, still holding a profile snapshot from before review B's own edit & submit sequence landed. There is no lock forcing one loop to wait for the other; the two loops for the same `profile_id` simply race.
+
+**Expected result once fixed:** a per-profile lock must serialize the two loops so `call_order` comes back as either `["A_start", "A_end", "B_start", "B_end"]` or `["B_start", "B_end", "A_start", "A_end"]` -- one loop fully finishing (and releasing its per-profile lock) before the other is allowed to begin. The test asserts exactly this.
