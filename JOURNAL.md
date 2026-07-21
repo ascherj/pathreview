@@ -15,4 +15,5 @@ The public service functions in `core/services/` have docstrings, but they do no
 
 **Cohort ledger:** [x] Issue added to cohort ledger
 
-**Scope clarification:** The issue references `core/services/notification_service.py`, but I verified that this file does not exist in the latest `upstream/main`. Therefore, the implementation will cover the eight public functions in `profile_service.py` and `review_service.py` without creating an unrelated service file.
+**Selection notes:**
+This Tier 2 issue has a clear, manageable scope and matches my familiarity with Python service functions, type annotations, and documentation. The expected changes can be verified by reviewing the function signatures, generated docstrings, and repository validation results. The issue references `core/services/notification_service.py`, but I verified that this file does not exist in the latest `upstream/main`. Therefore, the implementation covers the eight public functions in `profile_service.py` and `review_service.py` without creating an unrelated service file.
