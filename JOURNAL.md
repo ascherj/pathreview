@@ -45,3 +45,18 @@ I checked out the original base commit `664c3d7` and ran three focused faithfuln
 
 **Blockers or open questions:**  
 No current blockers. The main risk going into Week 9 is ensuring that the relaxed threshold for short claims does not create false positives or change the expected behavior for longer claims.
+
+## Week 9 — Solution building & PR submission
+
+### Check-in 1 (mid-week)
+
+**Current progress:**  
+I implemented normalized token matching in `rag/evaluator/faithfulness_checker.py`, added support for short claims using one meaningful overlapping token, and updated the claim-extraction behavior for short competency statements. The three issue-related regression tests now pass.
+
+**Next steps:**  
+I will add a direct regression test for the issue's `"Knows Python. Knows SQL."` example, run `make check` and `make test-unit`, review the implementation for false-positive and scope risks, open a draft PR, and request peer or mentor feedback.
+
+**Blockers:**  
+None currently.
+
+---
