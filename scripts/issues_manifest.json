@@ -316,6 +316,23 @@
     "effort": "6\u20139 hours"
   },
   {
+    "id": "A-21",
+    "title": "Clean up stale Chroma embeddings when a document's content changes",
+    "body": "IngestionPipeline's hash-based skip (A-13) only detects and skips unchanged resubmissions. When content changes, a new source_id/IngestedSource row/set of Chroma chunks is created and the previous version's chunks are left in place. This causes unbounded storage growth in ChromaDB as users iterate on their portfolios, and lets RAG retrieval surface stale, outdated content alongside the current version for the same profile, mixing old and new information in generated feedback. Delete the previous version's chunks from ChromaDB (matched via the prior source_id for the same profile/source identity) when a document is re-ingested with changed content, and decide what happens to the corresponding old ingested_sources row (delete vs. mark superseded).",
+    "labels": [
+      "tier-2",
+      "ingestion",
+      "devops",
+      "enhancement"
+    ],
+    "files": [
+      "ingestion/pipeline.py",
+      "ingestion/embeddings/batch_processor.py",
+      "core/models/ingested_source.py"
+    ],
+    "effort": "4-6 hours"
+  },
+  {
     "id": "B-01",
     "title": "Review generator returns raw JSON string instead of parsed feedback object",
     "body": "`output_parser.py` expects the LLM to return JSON wrapped in a code fence (```json ... ```). When the LLM omits the fences, the parser fails to extract the JSON and returns the raw string to the API, which passes it unparsed to the frontend.",
