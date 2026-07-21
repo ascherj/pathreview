@@ -98,17 +98,17 @@ class ResumeParser(BaseParser):
 
     def _strip_markdown(self, content: str) -> str:
         """Remove markdown syntax from content."""
-        # Remove markdown headers
-        text = re.sub(r"^#+\s+", "", content, flags=re.MULTILINE)
+        # Remove markdown headers with optional leading whitespace
+        text = re.sub(r"^\s*#+\s+", "", content, flags=re.MULTILINE)
 
         # Remove markdown links [text](url)
         text = re.sub(r"\[([^\]]+)\]\(([^\)]+)\)", r"\1", text)
 
         # Remove markdown bold **text** or __text__
-        text = re.sub(r"[*_]{2}([^*_]+)[*_]{2}", r"\1", text)
+        text = re.sub(r"([*_]{2})(.*?)\1", r"\2", text)
 
         # Remove markdown italic *text* or _text_
-        text = re.sub(r"[*_]([^*_]+)[*_]", r"\1", text)
+        text = re.sub(r"([*_])(.*?)\1", r"\2", text)
 
         # Remove markdown code blocks
         text = re.sub(r"```[\s\S]*?```", "", text)
@@ -119,7 +119,8 @@ class ResumeParser(BaseParser):
         # Remove HTML tags
         text = re.sub(r"<[^>]+>", "", text)
 
-        # Remove extra whitespace
+        # Remove extra whitespace and normalize line breaks
+        text = re.sub(r"\r\n", "\n", text)
         text = re.sub(r"\n{3,}", "\n\n", text)
 
         return text.strip()
@@ -130,17 +131,8 @@ class ResumeParser(BaseParser):
         text_lower = text.lower()
 
         for section in SECTION_HEADERS:
-            # Look for section header patterns
-            patterns = [
-                rf"^{re.escape(section)}\s*$",
-                rf"^{re.escape(section)}\s*[:|-]",
-                rf"\n{re.escape(section)}\s*$",
-                rf"\n{re.escape(section)}\s*[:|-]",
-            ]
-
-            for pattern in patterns:
-                if re.search(pattern, text_lower, re.MULTILINE):
-                    detected.append(section.title())
-                    break
+            pattern = rf"(^|\n)\s*{re.escape(section)}\s*(?:[:|-])?(?:\s|$)"
+            if re.search(pattern, text_lower, re.MULTILINE):
+                detected.append(section.title())
 
         return list(set(detected))  # Remove duplicates

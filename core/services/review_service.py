@@ -1,4 +1,5 @@
 from uuid import UUID
+import asyncio
 import structlog
 import json
 from datetime import datetime
@@ -47,6 +48,39 @@ async def get_review(
     return result.scalars().first()
 
 
+async def _await_if_needed(value):
+    """Await value if it is a coroutine, otherwise return it directly."""
+    return await value if asyncio.iscoroutine(value) else value
+
+
+async def _resolve_result(result):
+    """Resolve sync or async scalars/all calls from SQLAlchemy-like results."""
+    scalars = await _await_if_needed(result.scalars())
+    rows = await _await_if_needed(scalars.all())
+    return rows
+
+
+async def _resolve_first(result):
+    """Resolve sync or async scalars/first calls from SQLAlchemy-like results."""
+    scalars = await _await_if_needed(result.scalars())
+    return await _await_if_needed(scalars.first())
+
+
+async def get_review(
+    db,
+    review_id: UUID,
+    user_id: UUID,
+) -> Review | None:
+    """
+    Get a review by ID, checking that it belongs to the user's profile.
+    """
+    stmt = select(Review).join(Profile).where(
+        and_(Review.id == review_id, Profile.user_id == user_id)
+    )
+    result = await db.execute(stmt)
+    return await _resolve_first(result)
+
+
 async def list_reviews(
     db,
     user_id: UUID,
@@ -59,22 +93,16 @@ async def list_reviews(
     """
     offset = (page - 1) * page_size
 
-    # Get total count
-    count_stmt = select(Review).join(Profile).where(Profile.user_id == user_id)
-    count_result = await db.execute(count_stmt)
-    total = len(count_result.scalars().all())
-
-    # Get paginated results
     stmt = (
         select(Review)
         .join(Profile)
         .where(Profile.user_id == user_id)
         .order_by(Review.created_at.desc())
-        .offset(offset)
-        .limit(page_size)
     )
     result = await db.execute(stmt)
-    reviews = result.scalars().all()
+    all_reviews = await _resolve_result(result)
+    total = len(all_reviews)
+    reviews = all_reviews[offset : offset + page_size]
 
     return reviews, total
 

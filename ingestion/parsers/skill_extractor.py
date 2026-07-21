@@ -79,30 +79,30 @@ class SkillExtractor:
     }
 
     DATABASES = {
-        "postgresql": 0.95,
-        "mysql": 0.95,
-        "mongodb": 0.95,
-        "redis": 0.90,
-        "elasticsearch": 0.90,
-        "dynamodb": 0.90,
-        "firebase": 0.85,
-        "cassandra": 0.85,
-        "oracle": 0.85,
+        "PostgreSQL": (0.95, ["postgresql", "postgres", "psycopg2", "psycopg"]),
+        "MySQL": (0.95, ["mysql", "mysql2"]),
+        "MongoDB": (0.95, ["mongodb", "mongo"]),
+        "Redis": (0.90, ["redis"]),
+        "Elasticsearch": (0.90, ["elasticsearch", "es"]),
+        "DynamoDB": (0.90, ["dynamodb"]),
+        "Firebase": (0.85, ["firebase"]),
+        "Cassandra": (0.85, ["cassandra"]),
+        "Oracle": (0.85, ["oracle"]),
     }
 
     TOOLS = {
-        "docker": 0.95,
-        "kubernetes": 0.95,
-        "git": 0.90,
-        "github": 0.90,
-        "gitlab": 0.90,
-        "aws": 0.90,
-        "gcp": 0.90,
-        "azure": 0.90,
-        "ci/cd": 0.85,
-        "jenkins": 0.85,
-        "terraform": 0.85,
-        "ansible": 0.85,
+        "Docker": (0.95, ["docker", "dockerfile", "docker-compose"]),
+        "Kubernetes": (0.95, ["kubernetes", "kubectl", "helm", "apiVersion:", "kind:"]),
+        "Git": (0.90, ["git"]),
+        "GitHub": (0.90, ["github"]),
+        "GitLab": (0.90, ["gitlab"]),
+        "AWS": (0.90, ["aws", "boto3", "s3", "ec2", "lambda"]),
+        "GCP": (0.90, ["gcp", "google.cloud", "googleapis"]),
+        "Azure": (0.90, ["azure"]),
+        "CI/CD": (0.85, ["ci/cd", "circleci", "github actions", "gitlab ci", "jenkins"]),
+        "Jenkins": (0.85, ["jenkins"]),
+        "Terraform": (0.85, ["terraform"]),
+        "Ansible": (0.85, ["ansible"]),
     }
 
     def extract_skills(self, text: str, filename: Optional[str] = None) -> list[SkillDetection]:
@@ -172,22 +172,43 @@ class SkillExtractor:
 
         # JavaScript/TypeScript detection
         js_evidence = []
-        if ".js" in str(filename or "").lower():
+        ts_evidence = []
+        filename_lower = str(filename or "").lower()
+
+        if ".js" in filename_lower:
             js_evidence.append("JavaScript file extension (.js)")
-        if ".ts" in str(filename or "").lower():
-            js_evidence.append("TypeScript file extension (.ts)")
-        if re.search(r"\b(import|require)\s+", text):
+        if ".ts" in filename_lower or ".tsx" in filename_lower:
+            ts_evidence.append("TypeScript file extension (.ts/.tsx)")
+
+        if re.search(r"\bimport\s+", text):
             js_evidence.append("CommonJS or ES6 imports")
+        if re.search(r"\brequire\s*\(", text):
+            js_evidence.append("CommonJS require calls")
         if "package.json" in text_lower:
             js_evidence.append("package.json found")
 
-        if js_evidence:
-            confidence = min(0.95, 0.6 + len(js_evidence) * 0.1)
-            lang = "TypeScript" if ".ts" in str(filename or "").lower() else "JavaScript"
-            skills_dict[lang] = SkillDetection(
-                name=lang,
+        # TypeScript-specific indicators
+        if re.search(r"\bexport\s+(interface|type|enum|class)\b", text_lower):
+            ts_evidence.append("TypeScript export interface/type/enum/class")
+        if re.search(r"\bPromise<", text):
+            ts_evidence.append("TypeScript Promise generic")
+        if re.search(r":\s*(string|number|boolean|any|unknown|void|never|readonly)\b", text_lower):
+            ts_evidence.append("TypeScript type annotation")
+        if re.search(r"\bimplements\s+\w+", text_lower):
+            ts_evidence.append("TypeScript implements keyword")
+
+        if ts_evidence:
+            skills_dict["TypeScript"] = SkillDetection(
+                name="TypeScript",
                 category="Language",
-                confidence=confidence,
+                confidence=min(0.95, 0.6 + len(ts_evidence) * 0.1),
+                evidence=ts_evidence,
+            )
+        elif js_evidence:
+            skills_dict["JavaScript"] = SkillDetection(
+                name="JavaScript",
+                category="Language",
+                confidence=min(0.95, 0.6 + len(js_evidence) * 0.1),
                 evidence=js_evidence,
             )
 
@@ -249,28 +270,39 @@ class SkillExtractor:
         """Detect databases."""
         text_lower = text.lower()
 
-        for db, confidence in self.DATABASES.items():
-            if db in text_lower:
-                display_name = db.upper() if db in ["sql", "nosql"] else db.title()
+        for display_name, (confidence, keywords) in self.DATABASES.items():
+            if any(keyword in text_lower for keyword in keywords):
                 if display_name not in skills_dict:
                     skills_dict[display_name] = SkillDetection(
                         name=display_name,
                         category="Database",
                         confidence=confidence,
-                        evidence=[f"Found '{db}' reference in content"],
+                        evidence=[f"Found '{keywords[0]}' reference in content"],
                     )
 
     def _detect_tools(self, text: str, skills_dict: dict) -> None:
         """Detect tools and DevOps technologies."""
         text_lower = text.lower()
 
-        for tool, confidence in self.TOOLS.items():
-            if tool in text_lower:
-                display_name = tool.upper() if tool in ["ci/cd"] else tool.title()
-                if display_name not in skills_dict:
-                    skills_dict[display_name] = SkillDetection(
-                        name=display_name,
-                        category="Tool",
-                        confidence=confidence,
-                        evidence=[f"Found '{tool}' reference in content"],
-                    )
+        for display_name, (confidence, keywords) in self.TOOLS.items():
+            found = False
+
+            if display_name == "Docker":
+                if any(keyword in text_lower for keyword in keywords):
+                    found = True
+                elif re.search(r"^\s*from\s+[\w\-./:]+", text_lower, re.MULTILINE):
+                    found = True
+                elif re.search(r"^\s*version\s*:\s*['\"]?\d+\.\d+['\"]?", text_lower, re.MULTILINE) and \
+                    re.search(r"^\s*services\s*:\s*$", text_lower, re.MULTILINE):
+                    found = True
+            else:
+                if any(keyword in text_lower for keyword in keywords):
+                    found = True
+
+            if found and display_name not in skills_dict:
+                skills_dict[display_name] = SkillDetection(
+                    name=display_name,
+                    category="Tool",
+                    confidence=confidence,
+                    evidence=[f"Found '{display_name}' reference in content"],
+                )
