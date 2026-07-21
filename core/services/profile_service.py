@@ -17,8 +17,21 @@ async def create_profile(
     resume_filename: str = None,
     resume_text: str = None,
 ) -> Profile:
-    """
-    Create a new profile for a user.
+    """Create a new profile for a user.
+
+    Args:
+        db: Database session.
+        user_id: UUID of the owning user.
+        data: Profile creation payload.
+        resume_filename: Optional uploaded resume filename.
+        resume_text: Optional uploaded resume text content.
+
+    Returns:
+        The newly created Profile.
+
+    Raises:
+        sqlalchemy.exc.IntegrityError: If a profile with the same user_id
+            already exists.
     """
     profile = Profile(
         user_id=user_id,
@@ -38,8 +51,15 @@ async def get_profile(
     profile_id: UUID,
     user_id: UUID,
 ) -> Profile | None:
-    """
-    Get a profile by ID, checking ownership.
+    """Get a profile by ID, checking ownership.
+
+    Args:
+        db: Database session.
+        profile_id: UUID of the profile to retrieve.
+        user_id: UUID of the requesting user (ownership check).
+
+    Returns:
+        The Profile if found and owned by user_id, otherwise None.
     """
     stmt = select(Profile).where(
         (Profile.id == profile_id) & (Profile.user_id == user_id)
@@ -54,8 +74,16 @@ async def update_profile(
     user_id: UUID,
     data: ProfileUpdate,
 ) -> Profile | None:
-    """
-    Update a profile, checking ownership.
+    """Update a profile, checking ownership.
+
+    Args:
+        db: Database session.
+        profile_id: UUID of the profile to update.
+        user_id: UUID of the requesting user (ownership check).
+        data: Profile update payload with optional fields.
+
+    Returns:
+        The updated Profile if found and owned, otherwise None.
     """
     profile = await get_profile(db, profile_id, user_id)
     if not profile:
@@ -77,9 +105,19 @@ async def delete_profile(
     profile_id: UUID,
     user_id: UUID,
 ) -> bool:
-    """
-    Delete a profile and cascade delete reviews and ingested sources.
-    Returns True if deleted, False if not found.
+    """Delete a profile and cascade delete its reviews and ingested sources.
+
+    Args:
+        db: Database session.
+        profile_id: UUID of the profile to delete.
+        user_id: UUID of the requesting user (ownership check).
+
+    Returns:
+        True if the profile was deleted, False if not found.
+
+    Raises:
+        Exception: If the database cascade operation fails; the transaction
+            is rolled back.
     """
     profile = await get_profile(db, profile_id, user_id)
     if not profile:
