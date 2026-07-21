@@ -16,3 +16,18 @@ A README scorer unit test uses a sample README that does not contain enough word
 **Setup confirmation:** [x] App runs locally at localhost:5173
 
 **Cohort ledger:** [x] Issue added to cohort ledger
+
+
+## Week 8 — Reproduction & solution planning
+
+**Reproduction commit link:** https://github.com/guillermobermejo/pathreview/commit/754c90e
+
+**Reproduction summary:**
+I reproduced the issue by running the `test_readme_with_all_quality_signals` test individually with pytest. The test failed because the fixture contained only 51 words, causing the scorer to categorize it as `minimal` while the test expected more than 100 words and the `comprehensive` category.
+
+**PLAN.md link:** https://github.com/guillermobermejo/pathreview/blob/test/156-fix-readme-scorer-fixture/PLAN.md
+
+**Walkthrough video (recommended):** Not completed (optional)
+
+**Blockers or open questions:**
+The existing test asserts that the word count is greater than 100, but the scorer requires at least 500 words for the `comprehensive` category. My current plan is to expand the fixture beyond 500 words while preserving all existing quality signals, but I may confirm whether the maintainers also want the word-count assertion aligned with the comprehensive threshold.
