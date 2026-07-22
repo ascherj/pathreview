@@ -41,18 +41,24 @@ sequenceDiagram
 
 ## Map
 
-- `core/services/review_service.py`, `process_review()`: needs to acquire a per-profile lock before running the pipeline and release it once the review reaches a terminal status (complete or failed).
-- `core/services/review_service.py`, module level: needs a registry mapping `profile_id` to an `asyncio.Lock`, since locks must be shared across the concurrent background tasks running in the same process.
+- `core/services/review_service.py`, `process_review()`: needs to acquire a per-profile Redis lock before running the pipeline and release it once the review reaches a terminal status (complete or failed).
+- `core/services/review_service.py`, module level: needs a Redis client built from `settings.redis_url`, following the same pattern as `SessionStore` and `RateLimiter`, which both take a `redis.Redis` client already connected to the same instance.
+- `core/config.py`: already exposes `redis_url`, no change needed there.
 - `api/routes/reviews.py`, `create_review_endpoint()`: no change to endpoint response behavior. It already returns immediately with status "pending" and schedules `process_review` via `background_tasks.add_task`, so the lock only needs to live inside `process_review`, not the endpoint.
-- `tests/integration/test_review_concurrency.py`: existing regression test, used as the pass/fail baseline. No changes expected.
+- `tests/integration/test_review_concurrency.py`: existing regression test, used as the pass/fail baseline for serialization. No changes expected to this file, since it only needs to keep passing under the new lock implementation.
+- New test coverage (file and location still to be decided in Week 9): lock lifecycle in isolation, lock expiration, and what a second request observes while a lock is already held. See "Testing Strategy" below.
 
 ## Plan
 
-1. Add a module level per-profile lock registry in `review_service.py`, an `asyncio.Lock` per `profile_id`, created lazily and reused across calls.
-2. Wrap the body of `process_review()` (from status set to "processing" through the terminal status commit) in `async with` the profile's lock, so a second call for the same `profile_id` blocks until the first releases it.
-3. Make sure the lock is released on every exit path, including the existing exception handler that marks the review "failed", so a failure in one loop cannot deadlock a later request for the same profile.
-4. Run the regression test against the fix and confirm `call_order` comes back as one of the two non-interleaved orders.
-5. Run `make check` and `make test-unit` per CONTRIBUTING.md before opening the PR.
+I originally planned this fix around an in-memory `asyncio.Lock` registry. After getting feedback on my Week 7 submission, I am revising the plan to use a Redis backed lock with a TTL instead, since the codebase already depends on Redis for the session store and market analyzer, and an in-memory lock does not protect against a worker crashing while it holds the lock. The plan below reflects that revision. My prior `asyncio.Lock` plan and the reasoning behind it are kept further down in this file under "Prior iteration" so there is a record of how the design changed.
+
+1. Add a module level Redis client in `review_service.py`, built from the existing `redis_url` setting in `core/config.py`, the same config value `SessionStore` and `RateLimiter` already read from.
+2. At the start of `process_review()`, acquire a Redis lock keyed by `profile_id` with a TTL, using the `redis.asyncio` client's built in `lock()` helper rather than hand rolling `SET NX`. If the lock is already held, the call blocks until it is released or the TTL expires.
+3. Wrap the same span of `process_review()` that the original plan called out (from status set to "processing" through the terminal status commit) so the lock covers the full pipeline, not just one step.
+4. Release the lock on every exit path, including the existing exception handler that marks the review "failed", and treat a release against an already expired lock as a non fatal, logged event rather than a crash, since expiry is the intended safeguard, not a bug.
+5. Write the new tests called out in "Testing Strategy" below for the lock lifecycle, expiration, and contention, since the existing regression test only proves serialization under the happy path.
+6. Run the regression test against the fix and confirm `call_order` comes back as one of the two non-interleaved orders.
+7. Run `make check` and `make test-unit` per CONTRIBUTING.md before opening the PR.
 
 ## Inputs & Outputs
 
@@ -62,18 +68,40 @@ Output: `call_order` must equal `["A_start", "A_end", "B_start", "B_end"]` or `[
 
 ## Risks, Unknowns, and Limitations
 
-The lock must live at module scope, not per request or per session, otherwise two calls in different background tasks would each get their own lock and never actually serialize. Since `process_review` runs as a FastAPI background task in the same process, an in-memory `asyncio.Lock` keyed by `profile_id` is sufficient for now, but it will not hold across multiple worker processes or machines. If the app is ever deployed with multiple workers, this needs to move to a distributed lock (for example Postgres advisory locks, since Postgres is already the datastore). Flagging this as a known limitation rather than solving it now keeps the fix scoped to #82.
+The biggest risk with my original `asyncio.Lock` plan was that it only serializes within a single worker process. Moving to a Redis lock removes that limitation for free, since Redis is a shared, out of process store the app already depends on. So, the lock now holds across multiple worker processes and machines, not just a single process. This also means the "single-process only" limitation from my original plan no longer applies and can be dropped.
+
+The main new risk with a Redis lock is a crashed or stuck worker holding the lock forever with no one left to release it (deadlock). A TTL is the safeguard: the lock expires on its own after a fixed window even if the process holding it dies mid-pipeline, so a later request for the same profile is never permanently blocked. The TTL needs to be comfortably longer than a real review pipeline takes to run, or the lock could expire while a healthy request is still legitimately using it, letting a second request start too early. I still need to pick and justify a concrete TTL value once I can measure how long the real pipeline takes end to end.
 
 A second risk is a surface level patch that only satisfies the test's exact timing without actually serializing the pipeline, for example locking only around the ingestion step instead of the whole pipeline. The lock needs to wrap the entire `process_review` body so downstream agent orchestrator state for a given profile is never touched by two runs at once.
 
-The lock registry itself could grow unbounded over the life of the process since locks are never removed once created. Not fixing this now since it is a small memory footprint per profile and out of scope for #82, but worth flagging.
+A third risk, called out directly in the feedback I received, is only testing the happy path where the lock is acquired, the work runs, and the lock is released cleanly. That alone would miss regressions in how the lock behaves when it is already held or when it expires. The Testing Strategy section below is my plan for covering those cases too.
 
 ## Edge Cases
 
 Verify the fix holds as the two loops' timing windows narrow toward zero overlap, not just the specific 0.2s and 0.05s sleep values in the current test, since the lock should serialize regardless of exact timing.
 
-Verify there is no check then act gap between checking whether a profile's lock is held and actually acquiring it. Creating the lock lazily with a plain dict lookup is only safe because `asyncio.Lock()` construction and the dict assignment happen without an intervening await, so two coroutines can't race into creating two different locks for the same profile_id.
+Verify what a second request actually observes while a lock is already held for its profile_id, since this is the exact scenario called out in my feedback. It should block and wait rather than proceeding, and once it does proceed, it should not be operating on stale state from before the first request's commit.
 
-Verify the new lock cannot deadlock. Since each profile has exactly one lock and `process_review` never awaits another profile's lock while holding its own, there is no lock ordering cycle possible. Also confirm the lock is released even when the pipeline raises partway through, covered by the existing try/except in `process_review`.
+Verify lock expiration behaves correctly: if a lock's TTL elapses without an explicit release (simulating a crashed worker), a second request for the same profile must be able to acquire the lock rather than waiting forever.
 
-Confirm a third, fourth, etc. concurrent request for the same profile queues correctly rather than just the two request case the test covers.
+Verify the lock is released even when the pipeline raises partway through, covered by the existing try/except in `process_review`. A failed pipeline run should not leave the lock held until its TTL expires if it can be released immediately instead.
+
+Confirm a third, fourth, etc. concurrent request for the same profile queues correctly rather than just the two request case the current regression test covers.
+
+## Testing Strategy
+
+The existing regression test at `tests/integration/test_review_concurrency.py` only proves the happy path: lock acquired, pipeline runs, lock released, in the right order. Per the feedback on my Week 7 submission, I am planning to add tests that cover the lock mechanism itself in isolation, not just the end to end pipeline behavior:
+
+1. **Lock lifecycle test:** acquire the lock, do some work, release it, and confirm it is actually gone from Redis afterward. This does not need real concurrency to be useful, a sequential test that exercises acquire then release will already catch most regressions in the lock code itself.
+2. **Lock expiration test:** acquire the lock, do not release it, wait past the TTL (or use a short TTL just for the test), and confirm a second acquire attempt succeeds instead of blocking forever.
+3. **Contention test:** acquire the lock, then attempt a second acquire while the first is still held, and confirm the second attempt blocks or fails to acquire immediately, rather than silently succeeding and letting two callers hold the same profile's lock at once.
+
+These will live alongside or near `tests/integration/test_review_concurrency.py` once I start implementation in Week 9. I have not written them yet since Week 8 is reproduction and planning only, but I wanted my plan to name concretely what "test coverage" means here instead of leaving it as a vague follow up.
+
+## Prior iteration (kept for traceability)
+
+My first pass at this plan (see the reproduction commit and my Week 7 JOURNAL.md entry) proposed a plain `asyncio.Lock` registry: a module level dict mapping `profile_id` to an `asyncio.Lock`, created lazily and reused across calls, with `process_review()` wrapped in `async with` the profile's lock. That version is superseded by the Redis based design above, but I am keeping the original reasoning here rather than deleting it, since it documents why I changed course:
+
+- The `asyncio.Lock` approach is simple stdlib and needs no new dependency, but it only works within a single process, which was flagged as a known, out of scope limitation rather than something I intended to fix.
+- I got feedback pointing out that the codebase already uses Redis (visible in the session store and market analyzer) and that a lock with no TTL has no defense against a crashed process holding it forever. That is the direct reason for the switch to a Redis lock with a TTL.
+- The original plan also only called for testing the non-interleaved happy path via the existing regression test, without separate coverage for lock expiration or contention. The Testing Strategy section above is the response to that gap.
