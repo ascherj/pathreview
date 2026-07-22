@@ -31,3 +31,26 @@ permissive matching.
 **Setup confirmation:** [x] App runs locally at localhost:5173
 
 **Cohort ledger:** [x] Issue added to cohort ledger
+
+
+## Week 8 — Reproduction & solution planning
+
+**Reproduction commit link:** [Reproduce issue #152](https://github.com/monikamarr/pathreview/commit/9d62939)
+
+**Reproduction summary:**
+I reproduced issue #152 by testing the short claims “Knows Python” and
+“Knows SQL” against context containing “python expert” and “sql expert.”
+The checker returned `0.0` instead of the expected `1.0` and reported only
+one extracted claim, confirming that short supported claims are not handled
+correctly.
+
+**PLAN.md link:** [Solution plan](https://github.com/monikamarr/pathreview/blob/fix/152-short-claim-faithfulness/PLAN.md)
+
+**Walkthrough video (recommended):**
+Not recorded.
+
+**Blockers or open questions:**
+I still need to determine how short claims should be evaluated without allowing
+generic one-word overlaps to create false positives. I also need to confirm why
+only one of the two short claims was extracted and whether compound claims
+should be split into separately scored claims.
