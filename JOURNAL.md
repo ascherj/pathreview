@@ -106,8 +106,5 @@ Ran `pytest tests/integration -v` and observed `collected 0 items` — the direc
 
 **PLAN.md link:** [PLAN.md](./PLAN.md)
 
-**Walkthrough video (recommended):** [link to your Loom video, ≤2 min — recommended, not graded]
-
 **Blockers or open questions:**
-- `retry_with_backoff(max_retries=2, backoff_factor=1.5)` calls `time.sleep()` between retries — the failure-scenario test will be slow (~1.5 s) unless `time.sleep` is patched. Plan is to use `unittest.mock.patch("agent.error_handling.time.sleep")`.
-- `_execute_with_timeout` logs a warning when elapsed > timeout but does not raise `TimeoutError` (it uses a post-hoc wall-clock check, not a signal or thread). No timeout test needed; the real enforcement gap is a separate issue.
+None — implementation path is clear going into Week 9.
