@@ -75,5 +75,5 @@ Updated `tests/unit/test_faithfulness_checker.py` with the exact Issue #152 regr
 
 Pre-existing repository failures remain, but comparison against `upstream/main` confirmed that this branch introduces no new test, lint, formatting, or type-checking failures.
 
-**Draft PR feedback received from:** [reviewer name or Slack handle]
+**Draft PR feedback received from:** none
 ---
