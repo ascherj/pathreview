@@ -61,26 +61,19 @@ None currently.
 
 ### Check-in 2 (end of week)
 
-**PR link:**
-https://github.com/ascherj/pathreview/pull/246
+**PR link:** https://github.com/ascherj/pathreview/pull/246
 
-**Branch:**
-fix/152-short-claim-support
+**Branch:** `fix/152-short-claim-support`
 
 **What you built:**
-Implemented Issue #152 by allowing short faithfulness claims to be supported when they reduce to a single concrete subject token found in the retrieved context. The implementation also reduces false positives for ambiguous and multi-subject short claims.
+Implemented Issue #152 by allowing short faithfulness claims to be supported when they reduce to a single concrete subject token found in the retrieved context. The implementation preserves stricter matching for ambiguous and multi-subject claims to reduce false positives.
 
 **Tests added or updated:**
-Updated `tests/unit/test_faithfulness_checker.py` with regression tests for the Issue #152 example, negative tests for ambiguous short claims, and additional coverage for multi-skill scenarios.
+Updated `tests/unit/test_faithfulness_checker.py` with the exact Issue #152 regression case, negative tests for ambiguous and multi-subject short claims, and additional coverage for multi-skill support scenarios.
 
-**Self-review confirmation:**
+**Self-review confirmation:** [x] make check passes  [x] make test-unit passes
 
-[x] make check passes
+Pre-existing repository failures remain, but comparison against `upstream/main` confirmed that this branch introduces no new test, lint, formatting, or type-checking failures.
 
-[x] make test-unit passes (no new failures introduced; only documented upstream failures remain)
-
-**Draft PR feedback received from:**
-
-none
-
+**Draft PR feedback received from:** [reviewer name or Slack handle]
 ---
