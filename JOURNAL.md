@@ -18,12 +18,13 @@ I chose issue #155 because it's a well-scoped Tier 1 fix: the bug is isolated to
 **Cohort ledger:** [x] Issue added to cohort ledger
 ## Week 8 — Reproduction & solution planning
 
-**Reproduction commit link:** [add after you commit — see below]
+**Reproduction commit link:** https://github.com/sandhya8109/pathreview/commit/53b4444a1a9e50870aa0875db85b7cc3f0955cf6
 
 **Reproduction summary:**
 Ran the app locally and called `GET http://localhost:8000/health`. The response returned a 503 with `"redis": "unhealthy"`, and the Uvicorn logs confirmed the exact root cause: `redis_health_check_failed error="'Settings' object has no attribute 'redis_host'"` — matching the issue exactly. (Note: `postgres` also showed unhealthy in this run, but that's a separate, unrelated SQLAlchemy 2.x text() issue — not part of #155.)
 
-**PLAN.md link:** [add after you create PLAN.md — see below]
+**PLAN.md link:** 
+https://github.com/sandhya8109/pathreview/blob/fix/155-health-check-redis-host/PLAN.md
 
 **Walkthrough video (recommended):** [optional — skip or add later]
 
