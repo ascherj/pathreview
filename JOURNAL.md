@@ -76,4 +76,37 @@ Updated `tests/unit/test_faithfulness_checker.py` with the exact Issue #152 regr
 Pre-existing repository failures remain, but comparison against `upstream/main` confirmed that this branch introduces no new test, lint, formatting, or type-checking failures.
 
 **Draft PR feedback received from:** none
+
+## Week 10 — Iteration & reflection
+
+### Reviewer feedback
+
+**Feedback received:** [ ] Yes  [x] No — still awaiting review
+
+**Summary of feedback:**
+No reviewer or maintainer feedback had arrived on PR #246 at the time of this reflection. The pull request remains open and ready for review.
+
+**How you responded:**
+No response or code changes were required because no reviewer feedback had been received.
+
+---
+
+### Reflection
+
+**What was harder than you expected?**
+The hardest part was not the initial code change, but defining a rule that fixed Issue #152 without creating new false positives. Allowing any single overlapping token would have made claims such as `Strong API design.` appear supported when the context only mentioned API routes, so I had to narrow the one-token rule to short claims with one concrete subject. Comparing the branch against `upstream/main` was also more involved than expected because the repository already had failing tests and lint errors.
+
+**What did you learn about working in a large codebase?**
+I learned that contributing to an existing codebase requires understanding both the local component and the repository's broader conventions. Changes to `rag/evaluator/faithfulness_checker.py` had to match existing test patterns, type-checking requirements, formatting hooks, and contribution standards rather than simply producing the correct output. I also learned that pre-existing failures must be documented carefully instead of being mistaken for regressions caused by my branch.
+
+**How did AI tools help — and where did they fall short?**
+AI tools were most useful for exploring the faithfulness checker, identifying possible edge cases, reviewing the branch diff, and suggesting targeted regression tests. They also helped me interpret failures from Ruff, Black, mypy, and pytest more quickly. However, some AI-generated suggestions initially broadened the implementation too much, including claim-splitting behavior that was outside the issue's scope, so I had to review the output, compare it against the issue requirements, and narrow the solution manually.
+
+**What would you do differently if you started over?**
+I would begin by writing the exact Issue #152 regression test and several negative tests before changing the implementation. That would make the acceptable behavior and false-positive boundaries clear earlier and reduce the need for later revisions. I would also run the upstream baseline for `make check` and `make test-unit` at the beginning of the week so that pre-existing failures were documented before implementation.
+
+**What are you most proud of from this module?**
+I am most proud that I did not stop after making the three original failing tests pass. I reviewed the false-positive risk, added exact and negative regression coverage in `tests/unit/test_faithfulness_checker.py`, and refined the implementation until Ruff, Black, and mypy all passed. The final contribution is narrowly scoped to Issue #152 and includes enough documentation for another developer to understand both the fix and its limitations.
+
+
 ---
