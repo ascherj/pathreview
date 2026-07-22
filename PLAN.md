@@ -1,6 +1,6 @@
 # Solution plan
 
-**Issue:** Faithfulness checker can never mark short claims as supported  
+**Issue:** Faithfulness checker can never mark short claims as supported
 **Issue link:** [Issue #152](https://github.com/ascherj/pathreview/issues/152)
 
 ## Understand

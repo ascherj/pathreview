@@ -10,6 +10,42 @@ logger = structlog.get_logger()
 class FaithfulnessChecker:
     """Verify that feedback claims are supported by context."""
 
+    STOP_WORDS = {
+        "a",
+        "an",
+        "the",
+        "is",
+        "are",
+        "was",
+        "were",
+        "be",
+        "been",
+        "and",
+        "or",
+        "but",
+        "in",
+        "of",
+        "to",
+        "for",
+        "that",
+        "this",
+        "has",
+        "have",
+        "with",
+    }
+    SHORT_CLAIM_CUE_WORDS = {
+        "know",
+        "knows",
+        "skilled",
+        "skill",
+        "skills",
+        "expert",
+        "expertise",
+        "experienced",
+        "experience",
+        "knowledge",
+    }
+
     def check(self, feedback: str, context_chunks: list[dict]) -> float:
         """Check faithfulness of feedback to context.
 
@@ -63,24 +99,12 @@ class FaithfulnessChecker:
         """
         # Split by sentence (simple regex)
         sentences = re.split(r"[.!?]+", text)
-        claims = []
         skill_nouns = {"experience", "expertise", "knowledge", "skill", "skills"}
+        claims = []
         for sentence in sentences:
             sentence = sentence.strip()
             tokens = FaithfulnessChecker._tokenize(sentence)
             if not tokens:
-                continue
-            if "," in sentence and tokens[-1] in skill_nouns:
-                shared_noun = tokens[-1]
-                for part in [p.strip() for p in sentence.split(",") if p.strip()]:
-                    part_tokens = FaithfulnessChecker._tokenize(
-                        re.sub(r"^\s*and\s+", "", part, flags=re.IGNORECASE)
-                    )
-                    claims.append(
-                        " ".join(part_tokens[-2:])
-                        if part_tokens[-1] == shared_noun
-                        else f"{part_tokens[-1]} {shared_noun}"
-                    )
                 continue
             parts = [
                 p.strip() for p in re.split(r"\band\b", sentence, flags=re.IGNORECASE) if p.strip()
@@ -112,39 +136,24 @@ class FaithfulnessChecker:
             True if claim is supported
         """
         # Tokenize and check for keyword overlap
-        stop_words = {
-            "a",
-            "an",
-            "the",
-            "is",
-            "are",
-            "was",
-            "were",
-            "be",
-            "been",
-            "and",
-            "or",
-            "but",
-            "in",
-            "of",
-            "to",
-            "for",
-            "that",
-            "this",
-            "has",
-            "have",
-            "with",
-        }
-        claim_tokens = set(FaithfulnessChecker._tokenize(claim)) - stop_words
-        context_tokens = set(FaithfulnessChecker._tokenize(context)) - stop_words
+        claim_tokens = set(FaithfulnessChecker._tokenize(claim)) - FaithfulnessChecker.STOP_WORDS
+        context_tokens = (
+            set(FaithfulnessChecker._tokenize(context)) - FaithfulnessChecker.STOP_WORDS
+        )
 
         # Require at least some meaningful overlap
         meaningful_overlap = claim_tokens & context_tokens
 
-        if len(claim_tokens) <= 3:
+        if FaithfulnessChecker._is_single_subject_short_claim(claim_tokens):
             return len(meaningful_overlap) >= 1
 
         return len(meaningful_overlap) >= 2
+
+    @staticmethod
+    def _is_single_subject_short_claim(claim_tokens: set[str]) -> bool:
+        """Return True when a short claim has one concrete subject token."""
+        subject_tokens = claim_tokens - FaithfulnessChecker.SHORT_CLAIM_CUE_WORDS
+        return len(subject_tokens) == 1
 
     @staticmethod
     def _tokenize(text: str) -> list[str]:
