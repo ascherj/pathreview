@@ -9,7 +9,7 @@
 **Tier:** [ x ] Tier 1  [ ] Tier 2  [ ] Tier 3
 
 **Problem summary:**
-The /health endpoint return service status but no safety metrics. The safety events last hour field. At this time the value is hardcoded to 0 instead of grabbing the actual event count from redis.
+The /health endpoint return service status but no safety metrics. The safety events last hour field. At this time the value is hardcoded to 0 instead of grabbing the actual event count from redis. This will need to be updated.
 
 **Branch name:** fix/68-health-check-safety-event
 
