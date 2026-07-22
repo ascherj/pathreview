@@ -1,17 +1,20 @@
-# Week 7 Journal
+## Week 7 — Issue selection
 
-## Issue Link
+**Issue link:** https://github.com/ascherj/pathreview/issues/151
 
-Repository: https://github.com/eyobedmerhawi/pathreview
+**Issue title:** Bias detector patterns are too narrow to match common phrasings
 
-Assigned issue: **Issue #151 – Bias detector patterns are too narrow to match common phrasings**
+**Tier:** [x] Tier 1  [ ] Tier 2  [ ] Tier 3
 
-## Issue Selection
+**Problem summary:**
+The bias detector in `safety/bias_detector.py` uses regular-expression patterns to identify potentially biased language in generated feedback. The existing educational-bias patterns were too narrow, so common statements about bootcamp graduates, self-taught developers, and online-course students were not consistently detected. This meant biased wording could pass through the detector even though it expressed the same assumptions as phrases the system already recognized. A successful fix would broaden the patterns while preserving the detector’s existing behavior and would include regression tests confirming that the additional phrasings are detected.
 
-I selected **Issue #151 (Tier 1)** because it matched my current familiarity with the codebase. The issue has a clearly defined scope and focuses on improving existing functionality instead of requiring major architectural changes. It gave me an opportunity to work with regular expressions, testing, and debugging while contributing a meaningful improvement.
+**Branch name:** `fix/bias-detector-patterns-151`
 
-## Problem Summary
+**Setup confirmation:** [ ] App runs locally at localhost:5173
 
-The bias detector was missing several common educational bias statements because its matching patterns were too narrow. As a result, phrases such as "bootcamp graduates are not prepared" or "self-taught developers lack a strong technical foundation" were not consistently detected.
+**Cohort ledger:** [ ] Issue added to cohort ledger
 
-To fix this issue, I expanded the detector's regex patterns to recognize additional common educational bias phrasings and added regression tests to verify the new behavior. A successful fix ensures these statements are correctly identified while preserving existing functionality.
+### Issue selection notes — “Is this right for me?”
+
+I selected a Tier 1 issue because this was my first contribution to a large, multi-module codebase and I wanted an issue with a focused and realistic scope. The change was limited mainly to `safety/bias_detector.py` and its unit tests, so I could understand the affected behavior without making architectural changes across the application. The issue matched my familiarity with Python, regular expressions, testing, and debugging. I also confirmed that the expected result could be validated with clear regression tests, which made the issue appropriate for my current skill level.
