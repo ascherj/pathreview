@@ -44,6 +44,22 @@ dashed-format matches, and makes the four related unit tests in
   existing dashed-format tests), appropriate for a first issue in an
   unfamiliar codebase.
 
+## Week 8 — Reproduction & solution planning
+
+**Reproduction commit link:** https://github.com/andrewskoblov/pathreview/commit/4af0fcc2518472b1561af9bb8528a31bab0695d6
+
+**Reproduction summary:**
+Ran the exact snippet from the issue against the unmodified code: `PIIScrubber().scrub("Call me at (555) 123-4567 or 555-123-4567")` returned `"Call me at (555) 123-4567 or [REDACTED]"` — the parenthesized number passed through untouched while the dashed one was redacted — and `detect()` returned no phone match for the parenthesized text at all. Confirmed the same failure through the test suite: `pytest tests/unit/test_pii_scrubber.py -q` showed 5 failing tests, 4 of which are exactly the ones the issue names (`test_us_phone_number_redaction`, `test_us_phone_formats`, `test_detect_phone_pii`, `test_phone_at_start_of_text`). Traced the root cause to the `phone_us` regex's separator character class (`[-.]?`), which never allows whitespace between digit groups, so any format with a space (parenthesized, or fully space-separated with a country code) fails to match.
+
+**PLAN.md link:** https://github.com/andrewskoblov/pathreview/blob/fix/146-pii-phone-regex/PLAN.md
+
+**Walkthrough video (recommended):** Not recorded — optional and not graded, skipping for now.
+
+**Blockers or open questions:**
+- I ended up implementing the actual fix (widening `phone_us`'s separator class to accept whitespace) alongside the reproduction rather than strictly sequencing "reproduce, then plan, then build" across separate weeks, since the fix itself was small once the root cause was clear. The commit linked above documents both the reproduction and the fix together — flagging in case that's not the expected chronology.
+- Found a second, unrelated pre-existing bug while testing: the `street_address` pattern in the same file can greedily eat ordinary prose (e.g. "Python applications" partially matches because "appl" contains "pl", treated as the abbreviation for "Place"), which fails `test_mixed_pii_and_text`. Out of scope for #146 (not among its named tests) — noting here in case it's worth a follow-up issue.
+- The 5th failing test (`test_mixed_pii_and_text`, tied to the `street_address` bug above) is still red after my fix — expected, since it's a different bug, but calling it out so it isn't mistaken for an incomplete fix.
+
 ## Environment setup notes
 
 - Forked to `andrewskoblov/pathreview`, cloned locally, `upstream` remote
