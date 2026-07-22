@@ -33,7 +33,7 @@
 
 **Issue title:** README scorer test fixture is too short for its own word-count assertion
 
-**Tier:** [ ] Tier 1  [ ] Tier 2  [ ] Tier 3
+**Tier:** [x] Tier 1  [ ] Tier 2  [ ] Tier 3
 
 **Problem summary:**
 The `readme_scorer` agent tool assigns a README a `word_count` and a
@@ -52,4 +52,4 @@ cover. This lives in `tests/unit/test_readme_scorer.py` against the
 
 **Setup confirmation:** [x] App runs locally at localhost:5173
 
-**Cohort ledger:** [ ] Issue added to cohort ledger
+**Cohort ledger:** [x] Issue added to cohort ledger
