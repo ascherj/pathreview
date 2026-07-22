@@ -26,3 +26,30 @@
 - Set up local development environment and verified the full stack runs.
 - Created branch `test/156-readme-scorer-fixture-word-count` for issue #156
   (README scorer test fixture too short for its word-count assertion).
+
+## Week 7 — Issue selection
+
+**Issue link:** https://github.com/ascherj/pathreview/issues/156
+
+**Issue title:** README scorer test fixture is too short for its own word-count assertion
+
+**Tier:** [ ] Tier 1  [ ] Tier 2  [ ] Tier 3
+
+**Problem summary:**
+The `readme_scorer` agent tool assigns a README a `word_count` and a
+`word_count_category` (e.g. "comprehensive") based on how long the README is.
+Its unit test `test_readme_with_all_quality_signals` claims to exercise the
+"comprehensive" path, asserting `word_count > 100` and
+`word_count_category == "comprehensive"`, but the fixture README it feeds in
+is only ~51 words long. The scorer behaves correctly and returns 51, so the
+assertion `51 > 100` fails — the test, not the code, is wrong. A successful
+fix extends the fixture README past 100 words (or corrects the assertion) so
+the test genuinely validates the comprehensive-length branch it was meant to
+cover. This lives in `tests/unit/test_readme_scorer.py` against the
+`agent` scorer tool.
+
+**Branch name:** test/156-readme-scorer-fixture-word-count
+
+**Setup confirmation:** [x] App runs locally at localhost:5173
+
+**Cohort ledger:** [ ] Issue added to cohort ledger
