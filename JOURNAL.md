@@ -102,7 +102,7 @@ Tier 3 is the right fit because the E2E test requires understanding the full age
 **Reproduction commit link:** [link to commit documenting the reproduced issue]
 
 **Reproduction summary:**
-Ran `pytest tests/integration -v` and observed `collected 0 items` — the directory contains only `__init__.py` and no tests exist, confirming zero coverage of the Orchestrator lifecycle. Running `pytest tests/unit -v` shows the 35 pre-existing unit failures are unrelated to this issue; the integration gap is entirely the absence of `test_agent_e2e.py`.
+Ran `pytest tests/integration -v` and observed `collected 0 items` — the directory contains only `__init__.py` and no tests exist, confirming zero coverage of the Orchestrator lifecycle. The unit suite has pre-existing failures unrelated to this issue (53 failed / 375 passed as of Week 8, up from the 35 noted in Week 7); the integration gap is entirely the absence of `test_agent_e2e.py`.
 
 **PLAN.md link:** [PLAN.md](./PLAN.md)
 
