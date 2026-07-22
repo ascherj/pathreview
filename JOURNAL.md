@@ -59,4 +59,28 @@ I will add a direct regression test for the issue's `"Knows Python. Knows SQL."`
 **Blockers:**
 None currently.
 
+### Check-in 2 (end of week)
+
+**PR link:**
+https://github.com/ascherj/pathreview/pull/246
+
+**Branch:**
+fix/152-short-claim-support
+
+**What you built:**
+Implemented Issue #152 by allowing short faithfulness claims to be supported when they reduce to a single concrete subject token found in the retrieved context. The implementation also reduces false positives for ambiguous and multi-subject short claims.
+
+**Tests added or updated:**
+Updated `tests/unit/test_faithfulness_checker.py` with regression tests for the Issue #152 example, negative tests for ambiguous short claims, and additional coverage for multi-skill scenarios.
+
+**Self-review confirmation:**
+
+[x] make check passes
+
+[x] make test-unit passes (no new failures introduced; only documented upstream failures remain)
+
+**Draft PR feedback received from:**
+
+none
+
 ---
