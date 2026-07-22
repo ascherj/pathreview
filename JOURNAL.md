@@ -108,3 +108,47 @@ Ran `pytest tests/integration -v` and observed `collected 0 items` — the direc
 
 **Blockers or open questions:**
 None — implementation path is clear going into Week 9.
+
+---
+
+## Week 9 — Implementation
+
+### Check-in 1 (mid-week)
+
+**Current progress:**
+- Step 1 complete: stub infrastructure defined (`StubSessionStore`, `_CountingStub`, 5 named tool stubs)
+- Step 2 complete: fixtures (`stub_store`, `all_stubs`, `orchestrator`, `full_profile`) written inside `TestOrchestratorE2E` class
+- Step 3 complete: happy-path test asserting all 5 tools run and session store is populated
+- Step 4 complete: partial-profile test confirming `github_tool` and `tech_detector` are skipped when trigger fields are absent
+- Fixed pre-existing mypy type errors in `agent/` files surfaced by our imports
+
+**Next steps:**
+- Steps 5–6: tool-failure test and session-persistence hydration test (both now complete)
+- Commit, push, open PR
+
+**Blockers:** None
+
+---
+
+### Check-in 2 (end of week)
+
+**PR link:** [PR #249](https://github.com/ascherj/pathreview/pull/249)
+
+**What was built:**
+Added `tests/integration/test_agent_e2e.py` with 7 tests covering the full `Orchestrator.run()` lifecycle using fully stubbed tools and a dict-backed session store — no Docker or Redis required. Tests cover the happy path (all 5 tools), partial profiles (plan skips absent tools), tool failure isolation (error dict returned, retry called exactly twice), session persistence write and hydration, empty profile, and ContextManager caching across repeated runs.
+
+**Tests:**
+`tests/integration/test_agent_e2e.py` — 7 tests in `TestOrchestratorE2E`:
+- `test_happy_path_all_tools_called`
+- `test_partial_profile_skips_missing_tools`
+- `test_tool_failure_is_isolated`
+- `test_session_persistence_write`
+- `test_session_persistence_hydration`
+- `test_empty_profile_produces_empty_results`
+- `test_repeated_run_uses_cache`
+
+**Branch:** `test/59-end-to-end-agent-test`
+
+**Self-review:**
+- [x] `make check` passes (mypy now clean on all staged files; pre-existing ruff errors in other files are out of scope)
+- [x] `make test-unit` passes (53 failed / 375 passed — identical to pre-existing baseline in `TEST_BASELINE.md`)
