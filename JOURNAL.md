@@ -1,20 +1,59 @@
-## Week 7 — Issue selection
+PathReview Contribution Journal
 
-**Issue link:** https://github.com/ascherj/pathreview/issues/152
+Week 7 — Issue selection
 
-**Issue title:** Faithfulness checker can never mark short claims as supported
+Issue link: https://github.com/ascherj/pathreview/issues/152
 
-**Tier:** [x] Tier 1  [ ] Tier 2  [ ] Tier 3
+Issue title: Faithfulness checker can never mark short claims as supported
 
-**Problem summary:**
-The faithfulness checker currently prevents short claims from being marked as supported, even when there is sufficient evidence. This results in valid short claims being incorrectly classified as unsupported. The issue appears to be in the evaluation logic rather than the retrieval of evidence. A successful fix will allow short claims to be evaluated fairly while maintaining the existing validation process.
+Tier: [x] Tier 1  [ ] Tier 2  [ ] Tier 3
 
-### Issue selection reasoning
+Problem summary:The faithfulness checker currently prevents short claims from being marked as supported, even when the retrieved evidence clearly supports them. This causes valid short claims to receive a faithfulness score of 0.0. The issue appears to involve both claim extraction and the token-overlap logic used to decide whether a claim is supported. A successful fix will allow short factual claims to receive credit without making longer or unrelated claims too easy to mark as supported.
 
-I chose this issue because it is a Tier 1 issue with a clearly defined problem and expected behavior. The issue appears to be limited to the faithfulness checker, making the scope manageable for a first contribution. I was able to locate the relevant code and understand where the evaluation logic is implemented. The issue can be reproduced, tested, and fixed without requiring major architectural changes across the project.
+Branch name: fix/152-short-claims-faithfulness
 
-**Branch name:** fix/152-short-claims-faithfulness
+Setup confirmation: [x] App runs locally at localhost:5173
 
-**Setup confirmation:** [x] App runs locally at localhost:5173
+Cohort ledger: [x] Issue added to cohort ledger
 
-**Cohort ledger:** [ ] Issue added to cohort ledger
+Issue selection reasoning
+
+I chose this issue because it is a Tier 1 issue with a clearly defined problem and expected behavior. The issue appears to be limited to the faithfulness checker, which makes the scope manageable for a first contribution to a large codebase. I was able to locate the relevant implementation and unit tests, and the bug can be reproduced without changing unrelated parts of the application. The main risk is lowering the support threshold too much and creating false positives, so the fix should treat short and long claims differently.
+
+Week 8 — Reproduction & solution planning
+
+Reproduction commit link: [paste your reproduction commit URL here after pushing]
+
+Reproduction summary:I reproduced the issue by checking the claims “Knows Python. Knows SQL.” against context chunks containing “python expert” and “sql expert.” The checker returned a faithfulness score of 0.0 even though both short claims had matching evidence. I also ran the faithfulness checker unit tests and confirmed that the partial-support, multiple-context, and varying-support tests fail with scores of 0.0.
+
+PLAN.md link: https://github.com/CV17-09/pathreview-issue-152/blob/fix/152-short-claims-faithfulness/PLAN.md
+
+Walkthrough video (recommended): Not recorded.
+
+Blockers or open questions:I need to determine the safest threshold for short claims so that one meaningful matching term can count as support without creating false positives for longer or vague claims.
+
+Reproduction evidence
+
+Command:
+
+pytest tests/unit/test_faithfulness_checker.py -v
+
+Result:
+
+22 tests collected
+
+18 passed
+
+4 failed
+
+Failures related to Issue #152:
+
+test_partial_support_returns_middle_score
+
+test_multiple_context_chunks
+
+test_multiple_claims_varying_support
+
+Additional unrelated failure observed:
+
+test_none_context_chunk_text
