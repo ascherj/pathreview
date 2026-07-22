@@ -1,5 +1,17 @@
-# Week 8 — Issue Selection
+# Week 8 — ssue Selection
+## Week 8 — Reproduction & solution planning
 
+**Reproduction commit link:** https://github.com/alexh30486-ui/pathreview/commit/89e53e6
+
+**Reproduction summary:**
+Reproduced the issue locally by executing `FaithfulnessChecker().check('Knows Python.', [{'text': None}])`. Confirmed that Python's `.get("text", "")` returns `None` when the `"text"` key explicitly holds a `None` value, causing `" ".join(...)` to crash with `TypeError: sequence item 0: expected str instance, NoneType found`.
+
+**PLAN.md link:** https://github.com/alexh30486-ui/pathreview/blob/fix/153-faithfulness-none-text/PLAN.md
+
+**Walkthrough video (recommended):** N/A
+
+**Blockers or open questions:**
+None.
 ## Issue Information
 
 | Field | Details |
