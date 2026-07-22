@@ -1,4 +1,14 @@
-"""Run the RAG evaluation suite against benchmark portfolios."""
+"""Run the RAG evaluation suite against benchmark portfolios.
+
+Week 8 reproduction (B-20) — feature gap, not a crash:
+  $ python3 scripts/run_evals.py
+  → prints "Evaluation complete. Results written to eval_results.json"
+  → but eval_results.json is never created
+  → tests/fixtures/sample_profiles/ is missing
+  → EvalSuite/EvalResult has no actionability_score (despite the TODO below)
+
+See PLAN.md and tests/unit/test_run_evals_reproduction.py.
+"""
 
 
 def main() -> None:
