@@ -22,7 +22,7 @@ I chose this issue because it is a Tier 1 issue with a clearly defined problem a
 
 Week 8 — Reproduction & solution planning
 
-Reproduction commit link: [paste your reproduction commit URL here after pushing]
+**Reproduction commit link:** https://github.com/CV17-09/pathreview-issue-152/commit/7821ab77f6e69f5abe98dbe7667fc7cd455e5fef
 
 Reproduction summary:I reproduced the issue by checking the claims “Knows Python. Knows SQL.” against context chunks containing “python expert” and “sql expert.” The checker returned a faithfulness score of 0.0 even though both short claims had matching evidence. I also ran the faithfulness checker unit tests and confirmed that the partial-support, multiple-context, and varying-support tests fail with scores of 0.0.
 
