@@ -6,6 +6,17 @@
 
 **Tier:** [x] Tier 1  [ ] Tier 2  [ ] Tier 3
 
+**Why this fits:** I chose a Tier 1 issue because this is my first time working
+in a codebase this size (multi-service Python + React with FastAPI, Postgres,
+Redis, and a vector store), and I wanted my first contribution to be scoped
+enough that I could understand the entire problem — not just patch around it.
+Issue #156 touches exactly one test file and one fixture, with no cross-module
+dependencies, an existing test that already defines the expected behavior, and
+a clear reproduction command (`pytest tests/unit/test_readme_scorer.py -q`).
+That combination meant I could verify I understood both the bug and the fix
+before writing any code, which felt like the right first step before taking on
+an issue that requires tracing logic across multiple files or modules.
+
 **Problem summary:**
 There's a unit test in the README scoring module (part of the agent/ingestion
 layer that analyzes a user's portfolio) that checks whether a README is long
