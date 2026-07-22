@@ -30,6 +30,8 @@ Files to **read** (subject under test, not modified):
 
 **Step 1 — Stub infrastructure**
 
+Mark the module with `pytestmark = pytest.mark.integration` so `make test-integration` (which runs `pytest -m integration`) actually collects these tests. Without the marker, CI shows green while covering nothing.
+
 Define inside `test_agent_e2e.py`:
 
 ```python
@@ -80,7 +82,7 @@ Assert:
 - `result["profile_id"] == profile_id`
 - `result["tool_results"]` contains keys for all five tools
 - Each value is `{"stub": True}` (the unwrapped `ToolResult.data`)
-- `stub_store.data[profile_id]` holds the same merged dict
+- `stub_store.data[profile_id] == result["tool_results"]` (the store persists `tool_results` only, not the top-level `profile_id` / `cached_results` keys)
 
 **Step 4 — Partial-profile test**
 
@@ -92,19 +94,21 @@ Assert:
 
 **Step 5 — Tool-failure test**
 
-Replace one stub's `execute()` to raise `RuntimeError("boom")`. Patch `agent.error_handling.time.sleep` to skip backoff delays.
+Replace one stub's `execute()` to raise `RuntimeError("boom")` unconditionally, and track call count on the stub. Patch `agent.error_handling.time.sleep` to skip the backoff delay.
 
-Assert:
+`retry_with_backoff(max_retries=2, ...)` will call `execute()` **twice** before giving up (attempt 1 → sleep → attempt 2 → raise), so assertions must reflect that:
+
 - The failing tool's result is `{"error": "boom", "success": False}`
+- `failing_stub.call_count == 2` (retry ran once, then gave up)
 - All other tools still have successful results (orchestrator does not abort on one failure)
 
 **Step 6 — Session-persistence test**
 
-After `run()`, inspect `stub_store.data[profile_id]` directly.
+Two-part test to cover both directions of the `SessionStore` handshake:
 
-Assert:
-- The dict is non-empty
-- It contains the keys for every tool in the plan
+*6a. Post-run write.* After `run()`, inspect `stub_store.data[profile_id]` directly. Assert the dict is non-empty and contains keys for every tool in the plan.
+
+*6b. Pre-run hydration.* Pre-seed `stub_store.data[profile_id] = {"stale_key": "stale_value"}`, then call `run()`. Assert that `stale_key` survives in the post-run stored dict — this proves the orchestrator loads prior session state via `session_store.get(...)` and merges into it, rather than overwriting. Without this, a regression that drops the `session_store.get(profile_id) or {}` line would silently pass.
 
 ---
 
@@ -121,13 +125,13 @@ Assert:
 
 ### Risks & unknowns
 
-1. **`retry_with_backoff` sleeps between retries.** The failure test will be ~1.5 s slow (one sleep between 2 attempts) without patching. Fix: `unittest.mock.patch("agent.error_handling.time.sleep")` in the failure test.
+1. **`retry_with_backoff` sleeps and retries — 2 attempts, 1.0 s sleep between them.** With `max_retries=2, backoff_factor=1.5`, the wait is `1.5 ** (attempt - 1) = 1.5^0 = 1.0 s` (not 1.5 s), and any raising tool is called twice. Fix: `unittest.mock.patch("agent.error_handling.time.sleep")` in the failure test, and expect `call_count == 2`.
 
 2. **`market_analyzer` is added if `plan` is non-empty** at the end of `_build_plan()`. This means the empty-profile edge case (`profile_data = {}`) produces an empty plan with no `market_analyzer`. Test the empty case to document this boundary.
 
 3. **`_execute_with_timeout` does not enforce a real timeout.** It logs a warning when `elapsed > tool_timeout` but never raises `TimeoutError`. No timeout test is needed; this is an existing implementation gap, not in scope for this issue.
 
-4. **`ContextManager` caches by input hash.** Calling the same tool twice with identical input returns the cached result without calling `execute()` again. The happy-path test should use distinct inputs per tool to avoid accidental cache collisions.
+4. **CI log noise from the failure test.** `retry_with_backoff` logs at `warning` on each retry attempt and `error` on exhaustion, plus the orchestrator's outer `except` logs another `error`. Use `caplog` to assert those log records if we want observability coverage; otherwise expect noisy but green CI output for Step 5.
 
 ---
 
@@ -136,6 +140,6 @@ Assert:
 | Case | How to handle |
 |---|---|
 | `profile_data = {}` | `_build_plan()` returns `[]`; `run()` returns `{"profile_id": ..., "tool_results": {}, "cached_results": {}}` — assert this shape |
-| Unknown tool name in plan | `_execute_tool` raises `ValueError`; `run()` catches and stores `{"error": "Unknown tool: ...", "success": False}` |
 | `session_store=None` | No `get`/`set` calls — `run()` still returns results; assert no `AttributeError` |
-| Repeated `run()` with same input | Second call returns cached results via `ContextManager`; `execute()` is not called a second time |
+| Repeated `run()` with same input on same Orchestrator | Second call returns cached results via `ContextManager` (instance-level cache); each stub's `execute()` is called only once across both runs |
+| Pre-existing session state for `profile_id` | Covered by Step 6b — prior keys must survive after `run()` merges new results |
