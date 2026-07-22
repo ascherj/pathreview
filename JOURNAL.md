@@ -10,7 +10,7 @@ _(No Week 7 entry in this clone yet. Week 8 work continues on branch `week8/b-20
 
 **Issue:** B-20 — Implement an offline eval runner that measures review quality across a benchmark portfolio set
 
-**Reproduction commit link:** _(filled after push — see latest commit on this branch)_
+**Reproduction commit link:** https://github.com/christophermayfield/pathreview/commit/292b2a368ce6a70f8eaea7a293ca82856629fe31
 
 **Reproduction summary:**
 Ran `python3 scripts/run_evals.py`. The script prints that evaluation is complete and that results were written to `eval_results.json`, but the file is never created. There is also no `tests/fixtures/sample_profiles/` directory, and `EvalResult` has no `actionability_score` despite the stub TODO. Three failing tests in `tests/unit/test_run_evals_reproduction.py` lock this gap in.
