@@ -23,3 +23,17 @@
 **Branch URL:** https://github.com/olivertang40/pathreview/tree/fix/156-readme-scorer-fixture-word-count
 
 **PR URL:** https://github.com/ascherj/pathreview/pull/231
+
+---
+
+## Week 8 — Reproduction & solution planning
+
+**Reproduction commit link:** https://github.com/olivertang40/pathreview/commit/425fb7b
+
+**Reproduction summary:** Ran `.venv\Scripts\pytest tests/unit/test_readme_scorer.py::TestReadmeScorer::test_readme_with_all_quality_signals -v` and observed `AssertionError: assert 51 > 100` — the fixture README contained only ~51 words while the test asserted `word_count > 100` and `word_count_category == "comprehensive"` (which requires 500+ words). The scorer logic was confirmed correct; the fixture was the sole problem.
+
+**PLAN.md link:** https://github.com/olivertang40/pathreview/blob/fix/156-readme-scorer-fixture-word-count/PLAN.md
+
+**Walkthrough video (recommended):** N/A
+
+**Blockers or open questions:** None — fix is complete and PR is open at https://github.com/ascherj/pathreview/pull/231
