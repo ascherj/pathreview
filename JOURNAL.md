@@ -94,3 +94,20 @@ Tier 3 is the right fit because the E2E test requires understanding the full age
 
 ## Initial State - Before working on anything
 - Ran unit test suite, 35 failing before any work is done
+
+---
+
+## Week 8 — Reproduction & solution planning
+
+**Reproduction commit link:** [link to commit documenting the reproduced issue]
+
+**Reproduction summary:**
+Ran `pytest tests/integration -v` and observed `collected 0 items` — the directory contains only `__init__.py` and no tests exist, confirming zero coverage of the Orchestrator lifecycle. Running `pytest tests/unit -v` shows the 35 pre-existing unit failures are unrelated to this issue; the integration gap is entirely the absence of `test_agent_e2e.py`.
+
+**PLAN.md link:** [PLAN.md](./PLAN.md)
+
+**Walkthrough video (recommended):** [link to your Loom video, ≤2 min — recommended, not graded]
+
+**Blockers or open questions:**
+- `retry_with_backoff(max_retries=2, backoff_factor=1.5)` calls `time.sleep()` between retries — the failure-scenario test will be slow (~1.5 s) unless `time.sleep` is patched. Plan is to use `unittest.mock.patch("agent.error_handling.time.sleep")`.
+- `_execute_with_timeout` logs a warning when elapsed > timeout but does not raise `TimeoutError` (it uses a post-hoc wall-clock check, not a signal or thread). No timeout test needed; the real enforcement gap is a separate issue.
