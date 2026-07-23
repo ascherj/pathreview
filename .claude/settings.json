@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(docker compose *)",
-      "Bash(sudo docker compose up -d)",
-      "Bash(sudo docker compose ps)"
-    ]
-  }
-}
