@@ -115,3 +115,109 @@ has 49 pre-existing failures unrelated to this change (only 1 is in
 `test_pii_scrubber.py` — `test_mixed_pii_and_text`, caused by an unrelated
 `street_address` regex bug documented in PLAN.md's Risks section, not
 something #146 asked me to fix).
+
+---
+
+### Check-in 2 (end of week)
+
+**PR link:** https://github.com/ascherj/pathreview/pull/273
+
+**Branch:** fix/146-pii-phone-regex
+
+**What you built:**
+Fixed `PIIScrubber.PII_PATTERNS["phone_us"]` in `safety/pii_scrubber.py` so
+it redacts parenthesized (`(555) 123-4567`) and fully-spaced
+(`+1 555 123 4567`) US phone number formats, not just the dashed/dotted
+ones it already handled. This required two changes to the regex: widening
+the separator character class to accept whitespace, and replacing the `\b`
+word-boundary anchors with `(?<!\w)`/`(?!\w)` lookarounds, since `\b`
+couldn't anchor immediately before an opening parenthesis and was leaving
+it un-redacted.
+
+**Tests added or updated:**
+`tests/unit/test_pii_scrubber.py` — added
+`test_detect_parenthesized_phone_matches_full_number` (asserts `detect()`
+returns the exact value `"(555) 123-4567"`, catching the leading-paren bug
+that looser existing assertions missed) and
+`test_scrub_redacts_mixed_phone_formats_in_one_string` (asserts a dashed
+and a parenthesized number in the same string are each redacted
+independently). Also added missing mypy type annotations across the file's
+existing test functions and removed two unused-variable assignments, both
+needed to satisfy the local pre-commit hooks once I touched the file.
+
+**Self-review confirmation:** [x] make check passes  [x] make test-unit passes
+(both confirmed with 0 new failures introduced relative to `main` — see
+Check-in 1 for the documented pre-existing failure counts)
+
+**Draft PR feedback received from:** none — shared the link, no comments or
+reviews came in by submission time.
+
+## Week 10 — Iteration & reflection
+
+### Reviewer feedback
+
+**Feedback received:** [ ] Yes  [x] No — still awaiting review
+
+**Summary of feedback:**
+No comments or reviews landed on [PR #273](https://github.com/ascherj/pathreview/pull/273) by the end of the module.
+
+**How you responded:**
+N/A — nothing to respond to. The PR is marked ready for review and left open in case feedback arrives after submission.
+
+---
+
+### Reflection
+
+**What was harder than you expected?**
+Almost none of the difficulty was in the actual bug — the `phone_us` regex
+fix is a two-line change. What actually ate time was the environment:
+Docker Desktop wasn't running, the bundled ChromaDB container turned out
+to be broken against NumPy 2.0 in its pinned image, `make setup` crashed on
+a Unicode checkmark because Windows' default console codepage is cp1252,
+and then `git commit` itself failed because the local `pre-commit` hook's
+virtualenv build hit Windows' 260-character path limit inside the Windows
+Store Python install's cache path. None of that was in the issue
+description — it's the "getting to the point where you can even start"
+tax that a written spec never mentions.
+
+**What did you learn about working in a large codebase?**
+The loose existing tests in `test_pii_scrubber.py` were themselves a
+lesson: `assert "[REDACTED]" in scrubbed` passes even if the fix is
+subtly wrong. Writing a stricter assertion (`assert value ==
+"(555) 123-4567"`, checking the *exact* match) surfaced a second bug — the
+leading `(` was never being redacted — that the issue report didn't
+mention and the existing test suite couldn't have caught. In someone
+else's codebase, the tests you inherit define the bar, but they don't
+define correctness; you have to independently decide whether "green"
+actually means "right."
+
+**How did AI tools help — and where did they fall short?**
+I worked through this with Claude Code driving most of the hands-on
+execution — running the setup, diagnosing each environment failure,
+proposing the regex fix, and writing the PLAN.md/JOURNAL.md drafts —
+while I made the calls at each decision point: which issue to pick,
+whether to fork/start Docker, when to accept a fix versus dig further,
+and reviewing the diffs before they were committed. It was genuinely
+fast at cross-referencing the codebase (tracing `PII_PATTERNS` through
+both `scrub()` and `detect()`, or checking whether other tests already
+covered a format) and at explaining *why* a regex failed rather than
+just proposing a replacement. Where it fell short: it wouldn't have
+caught the leading-paren bug on its own confidence — that only
+surfaced because I asked for a stricter test rather than accepting
+"tests pass" as the finish line, which is a reminder that AI output
+is only as rigorous as the standard you hold it to.
+
+**What would you do differently if you started over?**
+I'd write the stricter regression test *before* declaring the fix done,
+not after — the loose "contains [REDACTED]" tests gave false confidence
+for longer than they should have. I'd also sequence reproduction and
+planning more strictly before touching code; because the fix was small,
+I ended up implementing it in the same pass as reproducing it rather
+than reproduce → plan → build across separate steps, which the module
+is explicitly structured to avoid.
+
+**What are you most proud of from this module?**
+Catching the second, unreported bug (the leading-paren redaction gap)
+by refusing to trust a passing-but-loose test suite. It's a small thing
+compared to shipping the whole fix, but it's the part that actually
+required judgment rather than following the issue's repro steps.
