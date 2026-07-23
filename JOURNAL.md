@@ -11,6 +11,23 @@
 **Problem summary:**
 Long-running reviews that span five or more repositories currently lose all progress when the server restarts because agent session data is stored only in memory. When the API process terminates (during maintenance or deployment), all in-flight review state is lost with no way to recover. The fix requires persisting the agent's memory context to Redis before shutdown and restoring it on startup. This will ensure that users don't lose progress on long-running reviews and allow the system to handle server restarts gracefully without data loss.
 
+**Issue fit and selection reasoning:**
+
+**Scope-fit checklist:**
+- [x] Bounded fix — Not a massive refactor; adds persistence layer to `ContextManager` and `SessionStore`
+- [x] 3-4 week scope — Confirmed as Tier 3; estimate 2 weeks of work (session serialization, caching logic, tests)
+- [x] Clear acceptance criteria — Cache survives restart; tool results re-used from Redis, not re-executed
+- [x] Affects real users — Long-running reviews that span repositories lose progress on deploy
+- [x] Active maintenance — Issue shows maintainer engagement and clear reproduction steps
+- [x] Specific files identified — `Orchestrator`, `ContextManager`, `SessionStore`, Redis connection
+
+**Why this is Tier 3 for me:**
+- Requires understanding of async orchestration and memoization patterns (learning goal: multi-step system architecture)
+- Involves Redis persistence and serialization — new domain to me (learning goal: state management across system restarts)
+- Builds on existing `SessionStore` patterns — familiar enough to avoid being overwhelming
+- Clear deliverable: cache the tool results, persist to Redis, restore on restart
+- No language barriers (Python expertise) or missing infrastructure
+
 **Branch name:** fix/47-persist-agent-state-across-restarts
 
 **Setup confirmation:** [x] App runs locally at localhost:5173
