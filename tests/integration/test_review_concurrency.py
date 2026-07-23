@@ -17,11 +17,13 @@ import asyncio
 import uuid
 
 import pytest
+import redis.asyncio as redis
 from sqlalchemy import select
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 import core.services.review_service as review_service
+from core.config import settings
 from core.database import engine
 from core.models.profile import Profile
 from core.models.review import Review
@@ -36,6 +38,13 @@ async def _require_postgres():
             pass
     except (OperationalError, ConnectionError, OSError) as exc:
         pytest.skip(f"Postgres not reachable (run `docker-compose up -d postgres`): {exc}")
+
+
+async def _require_redis(client):
+    try:
+        await client.ping()
+    except (ConnectionError, OSError) as exc:
+        pytest.skip(f"Redis not reachable (run `docker-compose up -d redis`): {exc}")
 
 
 @pytest.mark.integration
@@ -149,3 +158,43 @@ async def test_concurrent_reviews_for_same_profile_are_serialized():
             if user_id is not None:
                 await cleanup_session.execute(User.__table__.delete().where(User.id == user_id))
             await cleanup_session.commit()
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_review_lock_contention_against_live_redis():
+    """A second acquire for the same profile_id must block on a live Redis lock.
+
+    Runs against the real Redis instance (docker-compose.yml, port 6379)
+    rather than a mock, since lock contention depends on Redis's actual
+    blocking semantics, which an in-process mock cannot exercise. Uses a
+    client built fresh in this test (not review_service.redis_client) so it
+    isn't bound to a connection left over from a previous test's event loop.
+    """
+    client = redis.Redis.from_url(settings.redis_url)
+    await _require_redis(client)
+
+    try:
+        profile_id = uuid.uuid4()
+        lock_a = client.lock(
+            f"review_lock:{profile_id}",
+            timeout=review_service.REVIEW_LOCK_TTL_SECONDS,
+        )
+        lock_b = client.lock(
+            f"review_lock:{profile_id}",
+            timeout=review_service.REVIEW_LOCK_TTL_SECONDS,
+        )
+
+        try:
+            await lock_a.acquire()
+
+            acquired_b = await lock_b.acquire(blocking=True, blocking_timeout=0.2)
+            assert (
+                acquired_b is False
+            ), "second acquire must not succeed while the first lock is held"
+
+        finally:
+            await lock_a.release()
+
+    finally:
+        await client.aclose()  # type: ignore[attr-defined]
