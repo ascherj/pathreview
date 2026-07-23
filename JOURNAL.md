@@ -119,7 +119,7 @@ None right now. I'm eager to get the expanded test coverage written and to verif
 
 ### Check-in 2 (end of week)
 
-**PR link:** [TBD]
+**PR link:** [https://github.com/ascherj/pathreview/pull/274]
 
 **Branch:** `fix/82-concurrent-review-locking`
 
@@ -134,3 +134,40 @@ Commit [a1264bf](https://github.com/DasEd955/pathreview/commit/a1264bf) rounds o
 **Self-review confirmation:** [x] make check passes  [x] make test-unit passes
 
 **Draft PR feedback received from (TBD):** [None]
+
+## Fix Visualization
+
+```mermaid
+sequenceDiagram
+    participant A as Request A<br/>process_review(profile_id=1)
+    participant L as [FIX] Redis Lock<br/>[FIX] review_lock:1
+    participant DB as Profile (shared state)
+    participant B as Request B<br/>process_review(profile_id=1)
+
+    A->>L: [FIX] 1. A acquires lock (timeout=300)
+    activate L
+    A->>DB: 2. A_start: read Profile snapshot
+    activate A
+    Note over A: 3. A awaits mid-pipeline<br/>(ingestion -> orchestration, [FIX] lock held)
+    B->>L: [FIX] 4. B attempts acquire, BLOCKS<br/>[FIX] (lock already held for profile_id=1)
+    Note over B: [FIX] 5. B waits...
+    A->>DB: 6. A commits changes
+    A-->>A: 7. A_end: review complete
+    deactivate A
+    A->>L: [FIX] 8. A releases lock (finally block)
+    deactivate L
+    L->>B: [FIX] 9. B acquires lock
+    activate L
+    B->>DB: 10. B_start: read Profile snapshot<br/>[FIX] (fresh, post-A-commit state)
+    activate B
+    Note over B: 11. B runs full pipeline
+    B->>DB: 12. B commits changes
+    B-->>B: 13. B_end: review complete
+    deactivate B
+    B->>L: [FIX] 14. B releases lock (finally block)
+    deactivate L
+
+    Note over A,B: call_order = [A_start(2), A_end(7), B_start(10), B_end(13)]<br/>[FIX] Result: consistent profile state<br/>[FIX] B always reads state that reflects A's completed commit
+```
+
+**What the diagram shows:** The Redis lock, keyed as `review_lock:{profile_id}`, is acquired before the `Profile` snapshot is read and held across the entire pipeline span. Request B's acquire attempt blocks instead of proceeding while A still holds the lock. So, B cannot start until A has fully committed and released. This guarantees one of the two non-interleaved orders, and B's snapshot always reflects A's completed changes rather than a stale one. The lock is released in a finally block on every exit path, including failure. So, a crashed or errored pipeline doesn't hold it beyond the release call, and the TTL is the backstop if release itself never runs.
