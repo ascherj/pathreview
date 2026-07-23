@@ -100,8 +100,7 @@ confirmed all 4 formats (`555-123-4567`, `(555) 123-4567`, `555.123.4567`,
 `+1 555 123 4567`) redact cleanly with no leftover characters.
 
 **Next steps:**
-- Open a draft PR against `ascherj/pathreview` so it's up for feedback
-  before the deadline.
+- Draft PR opened: https://github.com/ascherj/pathreview/pull/273
 - Share the draft in the class Slack channel for peer/mentor review.
 - Address any feedback, then mark the PR ready for review and fill in
   Check-in 2.
