@@ -31,6 +31,37 @@ sequenceDiagram
 
 **What the diagram shows:** Request A begins first and holds an in-memory `Profile` snapshot across several `await` points (ingestion, orchestration, RAG, safety checks). Since nothing keys off `profile_id`, Request B is free to start, run to completion, and commit its own changes while A is still suspended mid-pipeline. When A eventually resumes and commits, it does so against its now stale snapshot, producing the interleaved `["A_start", "B_start", "B_end", "A_end"]` order the regression test asserts against. A per-profile lock would force B to wait until A releases the lock, guaranteeing one of the two non-interleaved orders instead.
 
+## How to Reproduce
+
+**Root cause:** `process_review()` in `core/services/review_service.py` fetches its own `Profile` snapshot, then runs a multi-step pipeline (ingestion → agent orchestration → RAG → safety checks) with several `await` points and `db.commit()` calls in between. Nothing keys off `profile_id` to prevent two calls from running concurrently, so two review requests submitted for the same profile close together interleave freely against shared profile state instead of being serialized.
+
+The regression test at [`tests/integration/test_review_concurrency.py`](tests/integration/test_review_concurrency.py) pins this down deterministically (no flaky timing races) by monkeypatching the ingestion step of two concurrent `process_review()` calls to record when each starts/finishes, and forcing review A to pause mid-flight while review B's profile edit and full run land in between.
+
+To reproduce it yourself, from the repo root:
+
+```bash
+# 1. Start the real Postgres the app uses (docker-compose.yml service is named `db`,
+#    mapped to host port 5433)
+docker compose up -d db
+
+# 2. Point the app at it (matches .env.example)
+export DATABASE_URL="postgresql+asyncpg://pathreview:pathreview@localhost:5433/pathreview_dev"
+
+# 3. Apply migrations so the schema exists
+make migrate
+
+# 4. Run the regression test directly -- on unfixed code this FAILS
+.venv/Scripts/pytest tests/integration/test_review_concurrency.py -v -m integration
+```
+
+(On macOS/Linux, use `.venv/bin/pytest` per the Makefile's `VENV_BIN` convention.)
+
+**Expected result on current, unfixed code:** the test fails with
+
+```
+AssertionError: expected non-interleaved execution, got ['A_start', 'B_start', 'B_end', 'A_end']
+```
+
 ## Understand
 
 **Root cause:** `process_review()` in `core/services/review_service.py` fetches a `Profile` snapshot, then runs a multi-step pipeline (ingestion, agent orchestration, RAG, safety checks) with several `await` points and `db.commit()` calls in between. Nothing keys off `profile_id`, so two concurrent calls for the same profile interleave freely against shared profile state instead of being serialized.
