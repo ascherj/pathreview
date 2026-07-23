@@ -62,7 +62,7 @@ reviews on one profile ever need isolation.
 
 ### Check-in 2 (end of week)
 
-**PR link:** _pending — see PR opened against ascherj/pathreview_
+**PR link:** https://github.com/ascherj/pathreview/pull/275
 
 **Branch:** `fix/47-persist-agent-state-across-restarts`
 
