@@ -87,7 +87,7 @@ Review B starts and *completes entirely* while review A is still mid-flight, sti
 
 **Expected result once fixed:** a per-profile lock must serialize the two loops so `call_order` comes back as either `["A_start", "A_end", "B_start", "B_end"]` or `["B_start", "B_end", "A_start", "A_end"]`, one loop fully finishing (and releasing its per-profile lock) before the other is allowed to begin. The test asserts exactly this.
 
-## Week 8 — Reproduction & solution planning
+## Week 8 — Reproduction & Solution Planning
 
 **Reproduction commit link:** [4fdd789](https://github.com/DasEd955/pathreview/commit/4fdd789e6873107519a7a3636470dbbfe868945f)
 
@@ -101,9 +101,9 @@ I reproduced the issue by simulating concurrency and latency: two `process_revie
 
 None at this moment, but I'm eager to sanity check once the fix is implemented whether I considered enough edge cases and whether my prework analysis was thorough enough.
 
-## Week 9 — Solution building & PR submission
+## Week 9 — Solution Building & PR Submission
 
-### Check-in 1 (mid-week)
+### Check-in 1 (middle of week)
 
 **Current progress:**
 
@@ -116,3 +116,21 @@ I still need to work through plan items #5 through #7. That means writing the ne
 **Blockers:**
 
 None right now. I'm eager to get the expanded test coverage written and to verify my commit passes the linter, formatter, and the rest of the repo's code conventions cleanly.
+
+### Check-in 2 (end of week)
+
+**PR link:** [TBD]
+
+**Branch:** `fix/82-concurrent-review-locking`
+
+**What you built:**
+
+Commit [a1264bf](https://github.com/DasEd955/pathreview/commit/a1264bf) rounds out the Redis per profile review lock from PLAN.md, with the remaining test coverage called for in the Testing Strategy section. This completes plan deliverable items #5 through #7. The lock itself serializes concurrent `process_review()` calls for the same profile behind a Redis lock keyed by `profile_id`, with a 300 second TTL. A second request for a profile that already has a review in progress waits for the first to fully finish, instead of racing against it.
+
+**Tests added or updated:**
+
+`tests/unit/test_review_service.py` gained a new `TestReviewServiceLock` class. It covers lock lifecycle on the happy path, lock keying & TTL scoping per profile, and lock expiration behavior where a `LockError` on release is logged as a warning rather than raised. `tests/integration/test_review_concurrency.py` gained a new lock contention test. It acquires the per profile lock against the real, already running Redis instance and confirms a second acquire attempt on the same key returns `False` while the first is held. I verified all three new unit tests pass, and that the preexisting regression test in the integration file still passes alongside the new contention test.
+
+**Self-review confirmation:** [x] make check passes  [x] make test-unit passes
+
+**Draft PR feedback received from (TBD):** [None]

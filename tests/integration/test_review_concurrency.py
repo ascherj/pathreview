@@ -1,17 +1,4 @@
-"""Regression test for GitHub issue #82.
-
-Concurrent review requests for the same profile can produce inconsistent
-results: when a user submits two review requests for the same profile at
-nearly the same time, both requests run review_service.process_review()
-against the same profile_id with no synchronization. The second loop can
-start (and even finish) before the first loop (which is still holding an
-earlier snapshot of the profile) has released whatever exclusive access it
-should have had, so results become interleaved and inconsistent.
-
-Requires a live Postgres instance (see docker-compose.yml, port 5433) since
-this exercises core/database.py's real async engine/session machinery, the
-same as production. Run `docker-compose up -d postgres` before this test.
-"""
+"""Tests for review_service.py concurrency and locking (issue #82)."""
 
 import asyncio
 import uuid
@@ -50,15 +37,7 @@ async def _require_redis(client):
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_concurrent_reviews_for_same_profile_are_serialized():
-    """Two review loops for the same profile must not run concurrently.
-
-    Review A starts first (against resume v1), pauses mid-ingestion to
-    simulate real GitHub/portfolio fetch latency. While paused, the user
-    edits their profile (resume v2) and submits review B. Without a
-    per-profile lock, B's loop starts & finishes while A is still
-    in flight. A correct fix serializes the two loops: B must not start
-    until A has fully finished (or vice versa), never interleaved.
-    """
+    """Test that two review loops for the same profile are serialized, not interleaved."""
     await _require_postgres()
 
     call_order = []
@@ -132,10 +111,6 @@ async def test_concurrent_reviews_for_same_profile_are_serialized():
 
         await asyncio.gather(process_a(), process_b())
 
-        # A per-profile lock must fully serialize the two loops: one loop's
-        # start/end pair must not straddle the other's. Today, with no lock,
-        # this produces ["A_start", "B_start", "B_end", "A_end"]. B runs
-        # entirely nested inside A's still-open window.
         assert call_order in (
             ["A_start", "A_end", "B_start", "B_end"],
             ["B_start", "B_end", "A_start", "A_end"],
@@ -163,14 +138,7 @@ async def test_concurrent_reviews_for_same_profile_are_serialized():
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_review_lock_contention_against_live_redis():
-    """A second acquire for the same profile_id must block on a live Redis lock.
-
-    Runs against the real Redis instance (docker-compose.yml, port 6379)
-    rather than a mock, since lock contention depends on Redis's actual
-    blocking semantics, which an in-process mock cannot exercise. Uses a
-    client built fresh in this test (not review_service.redis_client) so it
-    isn't bound to a connection left over from a previous test's event loop.
-    """
+    """Test that a second acquire for the same profile_id blocks on a live Redis lock."""
     client = redis.Redis.from_url(settings.redis_url)
     await _require_redis(client)
 
