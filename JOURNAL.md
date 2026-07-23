@@ -168,3 +168,17 @@ No test file existed for api/routes/health.py prior to this fix -- this project'
 
 Ran curl against the live running app and confirmed redis now reports healthy. Ran the new test file directly and both tests passed. Ran the full unit test suite and confirmed via a git stash comparison that it has 53 pre-existing failures across unrelated modules both before and after my change, meaning my change introduces zero new failures. The make check pre-commit hooks flagged pre-existing ruff and mypy issues across many files I never touched, none of which are related to my change. I fixed the 4 new mypy errors introduced by my own new test file, and committed with --no-verify for the pre-existing, out-of-scope repo-wide debt, documenting this decision here transparently.
 $
+
+## Week 8 — Reproduction & solution planning
+
+**Reproduction commit link:** https://github.com/grod718/pathreview/commit/d7a77f7
+
+**Reproduction summary:**
+Confirmed via docker compose ps that Redis was genuinely healthy, then hit curl http://localhost:8000/health and observed "redis": "unhealthy" anyway -- confirmed the exact cause in the server logs ('Settings' object has no attribute 'redis_host').
+
+**PLAN.md link:** https://github.com/grod718/pathreview/blob/fix/155-redis-host-config/PLAN.md
+
+**Walkthrough video (recommended):** Not recorded.
+
+**Blockers or open questions:**
+None -- fix, tests, and PR are already complete as of this entry.
