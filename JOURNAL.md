@@ -100,3 +100,19 @@ I reproduced the issue by simulating concurrency and latency: two `process_revie
 **Blockers or open questions:**
 
 None at this moment, but I'm eager to sanity check once the fix is implemented whether I considered enough edge cases and whether my prework analysis was thorough enough.
+
+## Week 9 — Solution building & PR submission
+
+### Check-in 1 (mid-week)
+
+**Current progress:**
+
+Plan items #1 through #4 from [PLAN.md](PLAN.md) are implemented in `core/services/review_service.py`. There's now a module level Redis client built from `settings.redis_url`, and `process_review()` acquires a per-profile lock at the start, keyed by `profile_id` with a 300 second TTL. The lock wraps the full pipeline span, from status set to processing through the terminal commit. It's released on every exit path, including the exception handler, and an already expired lock on release is treated as a logged warning rather than a crash. The regression test from commit [4fdd789](https://github.com/DasEd955/pathreview/commit/4fdd789e6873107519a7a3636470dbbfe868945f) now passes against this implementation.
+
+**Next steps:**
+
+I still need to work through plan items #5 through #7. That means writing the new lock lifecycle, expiration, and contention tests called out in the [Testing Strategy](PLAN.md#testing-strategy) section of PLAN.md. Then running the full test suite to confirm everything passes together, followed by a final cleanup pass before considering this ready for PR.
+
+**Blockers:**
+
+None right now. I'm eager to get the expanded test coverage written and to verify my commit passes the linter, formatter, and the rest of the repo's code conventions cleanly.
