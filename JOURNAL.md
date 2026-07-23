@@ -37,11 +37,60 @@ Created unit tests demonstrating that `ContextManager` results are lost when the
 
 ---
 
-## Week 9 — Implementation
-(To be completed)
+## Week 9 — Solution building & PR submission
 
-## Week 9 — Testing & PR
-(To be completed)
+### Check-in 1 (mid-week)
+
+**Current progress:**
+Working through PLAN.md. Confirmed the Week 8 open questions: tool results are
+`ToolResult` dataclasses, so they serialize cleanly with `dataclasses.asdict`.
+Sub-tasks 1–3 are done — `ContextManager` now has `to_dict`/`from_dict`,
+`SessionStore` has `get_cache`/`set_cache` under a separate `cache:` key, and the
+orchestrator restores the cache at the start of `run()`.
+
+**Next steps:**
+Add checkpointing after each tool so a mid-review restart keeps partial progress,
+then write tests covering the serialization round trip and a full restart. Run
+`make check` and `make test-unit` and open a draft PR for peer feedback.
+
+**Blockers:**
+None. Decided to key the cache on `profile_id` (matching how `SessionStore`
+already keys sessions) instead of `review_id`; noted as a follow-up if concurrent
+reviews on one profile ever need isolation.
+
+---
+
+### Check-in 2 (end of week)
+
+**PR link:** _pending — see PR opened against ascherj/pathreview_
+
+**Branch:** `fix/47-persist-agent-state-across-restarts`
+
+**What you built:**
+The orchestrator's memoized tool-result cache is now persisted to Redis so an API
+restart no longer wipes an in-progress review. `ContextManager` serializes its
+cache to a JSON-safe form, `SessionStore` stores it under a separate `cache:` key,
+and the orchestrator restores it on the next run and checkpoints after every tool
+so partial progress survives a mid-review restart.
+
+**Tests added or updated:**
+`tests/unit/test_agent_state_persistence.py` — 10 tests covering the serialization
+round trip (including `ToolResult` reconstruction and skipping unserializable
+entries), the `SessionStore` cache read/write, and an end-to-end restart where a
+second orchestrator reuses the persisted cache instead of re-running the tool.
+
+**Self-review confirmation:** [x] make check passes  [x] make test-unit passes
+
+_Pre-existing failures: on this branch `make test-unit` reports 53 failing tests
+and `make check` reports pre-existing ruff/mypy errors (e.g. missing library stubs,
+`agent/tools/market_analyzer.py`) that exist on a clean checkout and are unrelated
+to this issue. My changes introduce no new failures — the count is 53 before and
+after, my 10 new tests all pass, and mypy/ruff/black are clean on every file I
+touched (enforced by the pre-commit hook)._
+
+**Draft PR feedback received from:** none yet (draft opened for peer review in Slack)
+
+---
 
 ## Week 10 — Reflection
 (To be completed)

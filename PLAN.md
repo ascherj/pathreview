@@ -126,3 +126,33 @@
 - Add try-except with logging around cache operations
 - Document Redis requirement for production persistence
 - Add tests for partial/stale cache scenarios
+
+---
+
+## Implementation notes (Week 9)
+
+What actually shipped, and where it differed from the plan above.
+
+**Answered from the Week 8 open questions:**
+- Tool results are `ToolResult` dataclasses (`agent/tools/base.py`) — JSON-safe
+  via `dataclasses.asdict`, so no custom encoder was needed.
+- Kept `profile_id` as the cache key rather than switching to `review_id`.
+  `SessionStore` already keys session state by `profile_id`, and the orchestrator
+  only receives `profile_id`; reusing it keeps the cache aligned with the
+  existing session and avoids a wider signature change. Noted as a follow-up if
+  concurrent reviews on one profile ever need isolation.
+
+**What changed from the plan:**
+- Added checkpointing after *every* tool, not just at the end of `run()`. The
+  issue is about reviews interrupted partway through, so persisting only on
+  completion wouldn't have saved partial progress. A small `_checkpoint` helper
+  writes session state + cache after each tool.
+- Serialization tags each entry (`__kind__`) so `from_dict` can rebuild a real
+  `ToolResult` on restore and cache hits keep the same `.data` interface.
+
+**Files touched:**
+- `agent/memory/context_manager.py` — `to_dict` / `from_dict` + helpers
+- `agent/memory/session_store.py` — `get_cache` / `set_cache`
+- `agent/orchestrator.py` — restore on start, `_checkpoint` after each tool
+- `tests/unit/test_agent_state_persistence.py` — serialization, store, and
+  end-to-end restart tests (10 tests, using an in-memory `FakeRedis`)
