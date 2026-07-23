@@ -49,6 +49,9 @@ class Orchestrator:
         session_state = {}
         if self.session_store:
             session_state = self.session_store.get(profile_id) or {}
+            # Restore the memoized tool-result cache so a review that spans an
+            # API restart resumes from cached work instead of re-executing tools.
+            self.context_manager.from_dict(self.session_store.get_cache(profile_id) or {})
 
         # Execute plan
         results = {}
@@ -63,10 +66,12 @@ class Orchestrator:
                 logger.error("tool_execution_failed", tool=tool_name, error=str(e))
                 results[tool_name] = {"error": str(e), "success": False}
 
-        # Persist state
-        if self.session_store:
-            session_state.update(results)
-            self.session_store.set(profile_id, session_state)
+            # Checkpoint after every tool so an API restart mid-review keeps the
+            # progress made so far instead of discarding the whole in-flight run.
+            self._checkpoint(profile_id, session_state, results)
+
+        # Final persist (covers the empty-plan case where the loop never ran).
+        self._checkpoint(profile_id, session_state, results)
 
         logger.info("orchestrator_complete", profile_id=profile_id, tools_executed=len(results))
 
@@ -75,6 +80,24 @@ class Orchestrator:
             "tool_results": results,
             "cached_results": self.context_manager.get_all_results(),
         }
+
+    def _checkpoint(self, profile_id: str, session_state: dict, results: dict) -> None:
+        """Persist session state and the context cache to the session store.
+
+        No-op when no session store is configured. Called after each tool so a
+        restart mid-review keeps completed work; the memoized cache is stored
+        separately so it can be restored on the next run.
+
+        Args:
+            profile_id: Session/cache key.
+            session_state: Accumulated session state to persist.
+            results: Tool results gathered so far in this run.
+        """
+        if not self.session_store:
+            return
+        session_state.update(results)
+        self.session_store.set(profile_id, session_state)
+        self.session_store.set_cache(profile_id, self.context_manager.to_dict())
 
     def _build_plan(self, profile_data: dict) -> list[tuple[str, dict]]:
         """Build execution plan based on available data.
