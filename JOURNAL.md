@@ -78,3 +78,41 @@ Ran the exact snippet from the issue against the unmodified code: `PIIScrubber()
   migrations, seeding) completed successfully before that point.
 - App confirmed running at `http://localhost:5173` (frontend) and
   `http://localhost:8000/docs` (API), both returning HTTP 200.
+
+## Week 9 — Solution building & PR submission
+
+### Check-in 1 (mid-week)
+
+**Current progress:**
+All 5 sub-tasks from PLAN.md are done. Widened the `phone_us` separator
+character class in `safety/pii_scrubber.py` to accept whitespace alongside
+dash/dot, which fixes the four tests named in the issue. While writing a
+stricter regression test (asserting the *exact* matched value, not just
+"contains `[REDACTED]`"), I caught a second, related bug the loose existing
+tests missed: the `\b` anchor can't match immediately before `(`, since a
+preceding space and the paren are both non-word characters, so the match
+was starting one character late and leaving the opening paren un-redacted
+(`scrub("(555) 123-4567")` produced `"([REDACTED]"` instead of
+`"[REDACTED]"`). Replaced both `\b` anchors with `(?<!\w)`/`(?!\w)`
+lookarounds, which fixes that while still rejecting digits glued to
+adjacent letters (no regression there). Added two new regression tests and
+confirmed all 4 formats (`555-123-4567`, `(555) 123-4567`, `555.123.4567`,
+`+1 555 123 4567`) redact cleanly with no leftover characters.
+
+**Next steps:**
+- Open a draft PR against `ascherj/pathreview` so it's up for feedback
+  before the deadline.
+- Share the draft in the class Slack channel for peer/mentor review.
+- Address any feedback, then mark the PR ready for review and fill in
+  Check-in 2.
+
+**Blockers:**
+None for the fix itself. Documenting for the PR description: `ruff check .`
+finds 176 pre-existing errors repo-wide (0 in the 2 files I touched),
+`black --check .` finds 51 files that would be reformatted (0 of mine),
+`mypy` (source dirs only, matching CI's scope) finds 99 pre-existing errors
+in 25 files (`safety/pii_scrubber.py` is clean), and `pytest tests/unit`
+has 49 pre-existing failures unrelated to this change (only 1 is in
+`test_pii_scrubber.py` — `test_mixed_pii_and_text`, caused by an unrelated
+`street_address` regex bug documented in PLAN.md's Risks section, not
+something #146 asked me to fix).
