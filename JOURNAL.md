@@ -10,7 +10,7 @@
 
 ## Week 8 — Reproduction & solution planning
 
-**Reproduction commit link:** [add commit link]
+**Reproduction commit link:** [0a19d44](https://github.com/lovlynia/pathreview/commit/0a19d44)
 
 **Reproduction summary:**
 I reproduced the issue by tracing `api/routes/health.py` against `core/config.py` and confirming the old health check logic expected `settings.redis_host`/`settings.redis_port` while `Settings` provides `redis_url`. This mismatch causes the Redis probe path to fail and marks the health endpoint as unhealthy (HTTP 503).
