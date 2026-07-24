@@ -76,3 +76,34 @@ pre-existing failures, then open the PR with a fully filled template.
 
 **Blockers:**
 None.
+
+---
+
+### Check-in 2 (end of week)
+
+**PR link:** https://github.com/ascherj/pathreview/pull/278
+
+**Branch:** test/156-readme-scorer-fixture-length
+
+**What you built:**
+Extended the fixture README inside test_readme_with_all_quality_signals
+from 51 words to 599 words, since the scorer categorizes word_count_category
+as "comprehensive" only when word_count is 500 or higher, not just over 100
+as the issue text implied. No production code changed, only the test's
+own sample data.
+
+**Tests added or updated:**
+Modified tests/unit/test_readme_scorer.py. No new test was added since
+the bug was in the existing test's fixture data, not missing coverage.
+Verified all 23 tests in the file pass (was 22/23 before), including
+test_readme_with_all_quality_signals now correctly hitting the
+"comprehensive" code path with word_count=599.
+
+**Self-review confirmation:** [x] make check passes  [x] make test-unit passes
+
+Note: both are true for my changed file specifically. The codebase has
+182 pre-existing lint errors and 52 pre-existing test failures unrelated
+to test_readme_scorer.py (confirmed via git stash comparison and grep
+that none reference my file), documented in the PR description.
+
+**Draft PR feedback received from:** none
