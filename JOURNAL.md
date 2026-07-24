@@ -44,7 +44,7 @@ reflects the scorer's true behavior.
 
 ## Week 8 — Reproduction & solution planning
 
-**Reproduction commit link:** REPRO_COMMIT_URL_PLACEHOLDER
+**Reproduction commit link:** [REPRO_COMMIT_URL](https://github.com/sid-pandya/pathreview/commit/5e9df91223f4ddf453ff9c72e4b64bb8cee30e3d)
 
 **Reproduction summary:**
 I reproduced the bug by running the single failing test:
