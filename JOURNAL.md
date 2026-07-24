@@ -36,3 +36,46 @@ isn't obvious from the issue title alone.
 **Setup confirmation:** [x] App runs locally at localhost:5173
 
 **Cohort ledger:** [ ] Issue added to cohort ledger
+
+## Week 8 — Reproduction & solution planning
+
+**Reproduction commit link:** [docs: reproduce issue #47 and add PLAN.md](JOURNAL.md) (see this commit on branch `fix/47-persist-agent-progress-across-restarts`)
+
+**Reproduction summary:**
+The fix for #47 (`cb5cc09`) and its regression tests
+(`tests/unit/test_orchestrator.py`) were already committed on this branch
+before I got to this week's reproduction step, so instead of writing a new
+failing test from scratch I reproduced the original bug directly: I
+temporarily replaced `agent/orchestrator.py` with its pre-fix version
+(`git show cb5cc09^:agent/orchestrator.py`) and reran the existing
+regression suite against it.
+
+```
+$ ./.venv/Scripts/python -m pytest tests/unit/test_orchestrator.py -q
+...
+FAILED tests/unit/test_orchestrator.py::TestOrchestratorCheckpointing::test_progress_is_checkpointed_after_each_tool_not_only_at_the_end
+FAILED tests/unit/test_orchestrator.py::TestOrchestratorCheckpointing::test_restart_mid_review_resumes_without_rerunning_completed_tools
+FAILED tests/unit/test_orchestrator.py::TestOrchestratorCheckpointing::test_previously_failed_tool_is_retried_on_resume
+3 failed, 1 passed in 1.62s
+```
+
+The failure in `test_previously_failed_tool_is_retried_on_resume` shows the
+bug concretely: `tools["tool_a"].execute.call_count` is `1` when it should
+be `0` — the pre-fix orchestrator re-executes a tool that a prior run
+(simulated via a seeded `session_store`) had already completed
+successfully, because the loop in `Orchestrator.run()` never checked
+existing session state per-tool and only persisted results once, after the
+whole loop finished. I then restored `agent/orchestrator.py` via
+`git checkout -- agent/orchestrator.py` and confirmed all 4 tests pass again
+on the fixed version. This confirms the bug is real and pins it exactly to
+the loop body in `Orchestrator.run()` described in `PLAN.md`.
+
+**PLAN.md link:** [PLAN.md](PLAN.md)
+
+**Walkthrough video (recommended):** _not recorded this week_
+
+**Blockers or open questions:**
+None blocking. Open question carried into Week 9: whether the "already
+done" check should key off something more explicit than dict shape
+(`success` key) so a future tool with a different result shape can't be
+misread as complete — see Risks & unknowns in `PLAN.md`.
