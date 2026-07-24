@@ -41,3 +41,26 @@ reflects the scorer's true behavior.
 **Setup confirmation:** [x] App runs locally at localhost:5173
 
 **Cohort ledger:** [x] Issue added to cohort ledger
+
+## Week 8 — Reproduction & solution planning
+
+**Reproduction commit link:** REPRO_COMMIT_URL_PLACEHOLDER
+
+**Reproduction summary:**
+I reproduced the bug by running the single failing test:
+`.venv/bin/python -m pytest tests/unit/test_readme_scorer.py::TestReadmeScorer::test_readme_with_all_quality_signals -q`.
+It fails at `assert data["word_count"] > 100` with `assert 51 > 100`, and the scorer logs
+`category=minimal word_count=51`. This confirms the fixture README is only 51 words, so it can
+never reach the `comprehensive` category (which requires >= 500 words) that the test asserts.
+The scorer is behaving correctly; the defect is in the test fixture. (I also found and reverted
+a stray uncommitted edit that had pasted notes into the fixture, pushing it to 101 words, which
+still failed at `assert 'adequate' == 'comprehensive'` because 101 words is still below 500.)
+
+**PLAN.md link:** https://github.com/sid-pandya/pathreview/blob/fix/156-readme-scorer-fixture/PLAN.md
+
+**Walkthrough video (recommended):** not recorded (optional; may record and share in Slack)
+
+**Blockers or open questions:**
+None blocking. Open question: how far above 500 words to pad the fixture so it stays
+`comprehensive` without becoming noisy. I will confirm the exact `str.split()` count by running
+pytest rather than estimating, since code fences and markdown syntax also count as words.
