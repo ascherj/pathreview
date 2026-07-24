@@ -56,3 +56,23 @@ means my fix will need to extend the fixture much further than a quick
 read of the issue would suggest. Documented this in PLAN.md's Risks
 section — no blocker, just noting the scope is slightly larger than
 it first appeared.
+
+## Week 9 - Solution building & PR submission
+
+### Check-in 1 (mid-week)
+
+**Current progress:**
+Completed PLAN.md steps 1-2: re-read the existing fixture to identify
+which markers had to be preserved (install/usage keywords, badges, demo
+link), then extended it from 51 to 599 words by adding realistic
+Configuration, Contributing, Testing, and License sections. Confirmed
+via `.venv/bin/pytest tests/unit/test_readme_scorer.py -q` that all 23
+tests in the file now pass (was 22/23 before).
+
+**Next steps:**
+Complete PLAN.md steps 3-5: run the full unit test suite and `make check`
+to confirm no regressions outside the fixture change, document any
+pre-existing failures, then open the PR with a fully filled template.
+
+**Blockers:**
+None.
