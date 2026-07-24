@@ -71,10 +71,24 @@ gets checked, because the fixture is far too short.
   shared fixture used by other tests.
 
 ### Edge cases
-- The extended fixture must still contain all the markers the other
-  assertions check for: an install-related keyword, a usage-related
-  keyword, at least one `![...](...)` badge, and a demo-link phrase —
-  none of these should be accidentally removed or reworded out of
-  matching during the extension.
-- Word count boundary: aiming well above 500 (not just barely over) so
-  the test isn't fragile to minor rewording in the future.
+- **Boundary word count:** the code uses `elif word_count < 500` so a
+  count of exactly 500 already qualifies as "comprehensive" — but I'm
+  targeting 550-650 words rather than sitting right at 500, so a small
+  future edit to the fixture doesn't accidentally tip it back under the
+  threshold and reintroduce this same failure.
+- **Indentation inside the triple-quoted string:** the fixture is
+  embedded in a Python test method with leading whitespace on every
+  line. `content.split()` (used in `_score_readme`) splits on any
+  whitespace and ignores this indentation, so it shouldn't inflate the
+  word count — but I'll manually verify the printed `word_count` in the
+  test log matches what I'd expect from the added prose alone.
+- **Accidental duplicate pattern matches:** if new prose happens to
+  include a second `![...](...)`-style image link or another phrase
+  matching the demo-link regex, `has_badges`/`has_demo_link` would still
+  correctly evaluate to `True` (they're boolean, not counts), so this
+  isn't a real risk, but I confirmed it by rereading the regex checks
+  in `readme_scorer.py` rather than assuming.
+- **Other tests in the same file:** confirmed by reading the file that
+  the other 22 tests in `test_readme_scorer.py` each define their own
+  separate fixture strings, so extending this one fixture cannot affect
+  any other test's expected word count or category.
