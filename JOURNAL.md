@@ -39,7 +39,7 @@ isn't obvious from the issue title alone.
 
 ## Week 8 — Reproduction & solution planning
 
-**Reproduction commit link:** [docs: reproduce issue #47 and add PLAN.md](JOURNAL.md) (see this commit on branch `fix/47-persist-agent-progress-across-restarts`)
+**Reproduction commit link:** [4c0550b — docs: reproduce issue #47 and add Week 8 solution plan](https://github.com/LuisMend12/pathreview/commit/4c0550b)
 
 **Reproduction summary:**
 The fix for #47 (`cb5cc09`) and its regression tests
