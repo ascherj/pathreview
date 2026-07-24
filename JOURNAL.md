@@ -16,7 +16,7 @@ The database health check currently sends a raw SQL string when checking whether
 
 **Setup confirmation:** [ ] App runs locally at localhost:5173
 
-**Cohort ledger:** [ ] Issue added to cohort ledger
+**Cohort ledger:** [x] Issue added to cohort ledger
 
 ### "Is this right for me?" checklist reasoning
 
