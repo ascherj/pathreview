@@ -34,3 +34,25 @@ actually exercises the "comprehensive" case it's meant to check.
 **Setup confirmation:** [x] App runs locally at localhost:5173
 
 **Cohort ledger:** [ ] Issue added to cohort ledger
+
+## Week 8 — Reproduction & solution planning
+
+**Reproduction commit link:** https://github.com/sidhya-ganesh/pathreview/commit/891886febe90fa19a925fef97c633f7fafe324ce
+
+**Reproduction summary:**
+Ran `.venv/bin/pytest tests/unit/test_readme_scorer.py -q` and confirmed
+`test_readme_with_all_quality_signals` fails with `assert 51 > 100`. The
+captured log line shows `word_count=51, category=minimal`, confirming
+the fixture README is far shorter than the test's own assertions require.
+
+**PLAN.md link:** https://github.com/sidhya-ganesh/pathreview/blob/test/156-readme-scorer-fixture-length/PLAN.md
+
+**Walkthrough video (recommended):** Not recorded
+
+**Blockers or open questions:**
+While reading the scorer logic, I found that "comprehensive" actually
+requires >=500 words, not just >100 as the issue text implies. This
+means my fix will need to extend the fixture much further than a quick
+read of the issue would suggest. Documented this in PLAN.md's Risks
+section — no blocker, just noting the scope is slightly larger than
+it first appeared.
