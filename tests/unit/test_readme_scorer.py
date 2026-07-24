@@ -18,34 +18,109 @@ class TestReadmeScorer:
         """Test README with all quality signals returns high score."""
         readme = """
         # Project Name
-        A comprehensive project description.
+
+        A comprehensive project description that explains what this application does,
+        who it is built for, and why someone might want to use it in their own workflow.
+        This project aims to solve a common problem faced by developers who need a
+        reliable, well-tested, and easy-to-integrate solution for their applications.
+        It was built with a focus on clarity, maintainability, and developer experience,
+        so that new contributors can get up to speed quickly and existing users can
+        depend on consistent, well-documented behavior across releases.
 
         ## Installation
-        ```bash
+
+        Getting started only takes a few steps. First, make sure you have a supported
+        version of the runtime installed on your machine, then install the package
+        using your preferred package manager.
+
+```bash
         pip install package
-        ```
+```
+
+        Once installed, you can verify everything is working correctly by running the
+        built-in health check command, which confirms that all required dependencies
+        are present and correctly configured on your system.
 
         ## Usage
-        ```python
+
+        Using the library is straightforward. Import the package into your project and
+        call the primary entry point function with your configuration options. Below is
+        a minimal example showing the most common usage pattern.
+
+```python
         import package
         package.run()
-        ```
+```
+
+        For more advanced use cases, refer to the full API documentation, which covers
+        configuration options, event hooks, and integration examples with popular
+        frameworks and tools used throughout the ecosystem.
 
         ## Features
-        - Feature 1
-        - Feature 2
-        - Feature 3
+
+        - Feature 1: Fast, asynchronous processing designed to handle high-throughput
+          workloads without blocking the main application thread.
+        - Feature 2: A flexible plugin architecture that allows developers to extend
+          core functionality without modifying the underlying source code.
+        - Feature 3: Comprehensive logging and observability support out of the box,
+          making it easy to debug issues in both development and production.
+        - Feature 4: Built-in support for common data formats, reducing the amount of
+          boilerplate code needed to get started with real-world data.
+        - Feature 5: Extensive test coverage and continuous integration, ensuring that
+          new changes do not introduce regressions into existing functionality.
 
         ## Tech Stack
+
         - Python 3.9
         - FastAPI
         - PostgreSQL
+        - Redis
+        - Docker
+
+        This project is built entirely on modern, well-supported open source
+        technologies, chosen specifically for their reliability, community support,
+        and long-term maintainability within production environments.
+
+        ## Configuration
+
+        Configuration is handled through environment variables, documented in the
+        accompanying `.env.example` file. Sensible defaults are provided for local
+        development, so most users will not need to change anything to get started
+        right away.
+
+        ## Contributing
+
+        Contributions are welcome. Please read the contributing guide before opening
+        a pull request, and make sure to include tests for any new functionality you
+        add. All contributions are expected to follow the existing code style and
+        pass the full test suite before being merged.
+
+        ## Testing
+
+        This project includes an extensive automated test suite covering unit tests,
+        integration tests, and end-to-end scenarios. Before submitting any change,
+        contributors are expected to run the full test suite locally to confirm that
+        existing functionality continues to work as expected, and to add new tests
+        for any new behavior they introduce.
+
+        ## License
+
+        This project is distributed under an open source license that permits both
+        personal and commercial use, modification, and redistribution, provided that
+        proper attribution is maintained and the original license text is included
+        with any distributed copies of the source code.
 
         ![Build Status](https://example.com/badge.svg)
         ![Coverage](https://example.com/coverage.svg)
 
         ## Live Demo
+
         [Try it here](https://demo.example.com)
+
+        A live, hosted version of this project is available for anyone who wants to
+        try it out before installing it locally. The demo environment mirrors the
+        production configuration as closely as possible, so you can get a realistic
+        sense of how the application behaves before committing to a full setup.
         """
 
         result = scorer.execute({"readme_content": readme})
@@ -157,9 +232,10 @@ class TestReadmeScorer:
 
         result = scorer.execute({"readme_content": readme})
         # "Getting Started" matches the pattern
-        assert result.data["has_installation_section"] is True or result.data[
-            "has_usage_section"
-        ] is True
+        assert (
+            result.data["has_installation_section"] is True
+            or result.data["has_usage_section"] is True
+        )
 
     def test_quickstart_counts_as_usage(self, scorer):
         """Test that 'quickstart' counts as usage."""
@@ -218,7 +294,8 @@ class TestReadmeScorer:
 
     def test_overall_score_calculation(self, scorer):
         """Test that overall score aggregates components."""
-        readme = """
+        readme = (
+            """
         # Good README
 
         ## Installation
@@ -233,7 +310,9 @@ class TestReadmeScorer:
         ![Build](https://example.com/build.svg)
 
         This readme has lots of content here.
-        """ * 3  # Make it comprehensive
+        """
+            * 3
+        )  # Make it comprehensive
 
         result = scorer.execute({"readme_content": readme})
 
