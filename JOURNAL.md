@@ -91,27 +91,31 @@ touches only the readme_scorer test fixture and does not affect them.
 
 ### Check-in 2 (end of week)
 
-**PR link:** PASTE_YOUR_PR_URL_HERE
+**PR link:** https://github.com/ascherj/pathreview/pull/280
 
 **Branch:** `fix/156-readme-scorer-fixture`
 
 **What you built:**
-Replaced the 51-word README fixture in `test_readme_with_all_quality_signals` with a realistic
-564-word README that contains all the quality signals the scorer looks for. This lets the test
-exercise the `comprehensive` word-count category (>= 500 words) as intended, so it passes against
-the correct scorer behavior. No production code changed; the fix is limited to test data.
+I fixed a unit test that could never have passed. `test_readme_with_all_quality_signals` expects a
+strong README to be scored as "comprehensive," but the sample README baked into the test was only
+51 words, and the scorer only awards "comprehensive" at 500 words or more. So the test was set up
+to fail no matter how correct the scorer actually was. I rewrote that fixture into a realistic
+~560-word README that still carries every signal the test looks for (installation and usage
+sections, image badges, a live-demo link, and a tech-stack section), so it finally checks the
+behavior it was meant to. I didn't touch any production code, because the bug lived entirely in
+the test data.
 
 **Tests added or updated:**
-`tests/unit/test_readme_scorer.py`: updated the `test_readme_with_all_quality_signals` fixture.
-The assertions are unchanged; the fixture now satisfies them. Verified with `make test-unit`,
-where this test moves from failing to passing.
-
-**Pre-existing failures (documented per Week 9 guidance):**
-Baseline before my change: `53 failed, 375 passed`. After my change: `52 failed, 376 passed`.
-My change fixes exactly one test (the target) and introduces zero new failures. The remaining 52
-failures and all lint/format/type issues reported by `make check` are pre-existing and unrelated
-to this fix. "Passes" below means my changes introduce no new failures.
+Only `tests/unit/test_readme_scorer.py`. I left the assertions exactly as they were and just
+replaced the fixture README so it genuinely satisfies them. That one test goes from failing to
+passing, and the rest of the readme_scorer suite (23 tests in total) stays green.
 
 **Self-review confirmation:** [x] make check passes  [x] make test-unit passes
 
-**Draft PR feedback received from:** REPLACE_WITH_NAME_OR_SLACK_HANDLE_OR_none
+A quick note on what "passes" means here: this repo already had a lot of failing tests and lint
+warnings before I started, so I used the "no new failures" bar. The unit suite went from 53
+failing to 52 after my change, which means I fixed one test and broke nothing. Everything else
+that is red was already red and is unrelated to my fix, and I called that out in the PR
+description as well.
+
+**Draft PR feedback received from:** none
