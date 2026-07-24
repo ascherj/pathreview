@@ -64,3 +64,54 @@ still failed at `assert 'adequate' == 'comprehensive'` because 101 words is stil
 None blocking. Open question: how far above 500 words to pad the fixture so it stays
 `comprehensive` without becoming noisy. I will confirm the exact `str.split()` count by running
 pytest rather than estimating, since code fences and markdown syntax also count as words.
+
+## Week 9 — Solution building & PR submission
+
+### Check-in 1 (mid-week)
+
+**Current progress:**
+Implemented the fix. All five PLAN.md sub-tasks are done. I rewrote the `readme` fixture in
+`test_readme_with_all_quality_signals` (`tests/unit/test_readme_scorer.py`) into a realistic
+README of 564 words (verified `str.split()` count by running the test) that keeps every quality
+signal the test checks: Installation and Usage sections, three image badges, a "Live Demo" /
+"try it" link, and a Tech Stack section. The test now reports `category=comprehensive`,
+`word_count=564`, `overall_score=1.0`, and passes. The full `readme_scorer` suite is green
+(23 passed), and `ruff` and `black` are clean on the changed file.
+
+**Next steps:**
+Open a draft PR early, request peer/mentor review in Slack, fill in the PR template completely,
+then mark it ready for review and record the PR link in Check-in 2.
+
+**Blockers:**
+None. Note: the repo has ~52 pre-existing unit-test failures and many pre-existing lint/format
+issues in unrelated modules (skill_extractor, tech_detector, structural_chunker). My change
+touches only the readme_scorer test fixture and does not affect them.
+
+---
+
+### Check-in 2 (end of week)
+
+**PR link:** PASTE_YOUR_PR_URL_HERE
+
+**Branch:** `fix/156-readme-scorer-fixture`
+
+**What you built:**
+Replaced the 51-word README fixture in `test_readme_with_all_quality_signals` with a realistic
+564-word README that contains all the quality signals the scorer looks for. This lets the test
+exercise the `comprehensive` word-count category (>= 500 words) as intended, so it passes against
+the correct scorer behavior. No production code changed; the fix is limited to test data.
+
+**Tests added or updated:**
+`tests/unit/test_readme_scorer.py`: updated the `test_readme_with_all_quality_signals` fixture.
+The assertions are unchanged; the fixture now satisfies them. Verified with `make test-unit`,
+where this test moves from failing to passing.
+
+**Pre-existing failures (documented per Week 9 guidance):**
+Baseline before my change: `53 failed, 375 passed`. After my change: `52 failed, 376 passed`.
+My change fixes exactly one test (the target) and introduces zero new failures. The remaining 52
+failures and all lint/format/type issues reported by `make check` are pre-existing and unrelated
+to this fix. "Passes" below means my changes introduce no new failures.
+
+**Self-review confirmation:** [x] make check passes  [x] make test-unit passes
+
+**Draft PR feedback received from:** REPLACE_WITH_NAME_OR_SLACK_HANDLE_OR_none
