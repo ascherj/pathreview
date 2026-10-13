@@ -1,7 +1,6 @@
 """Tests for keyword_search.py"""
 
 import pytest
-from unittest.mock import Mock, patch
 
 from rag.retriever.keyword_search import KeywordSearcher
 
@@ -82,10 +81,7 @@ class TestKeywordSearcher:
 
     def test_top_k_limit(self, searcher):
         """Test that top_k parameter limits results."""
-        chunks = [
-            {"id": i, "text": f"python content {i}"}
-            for i in range(20)
-        ]
+        chunks = [{"id": i, "text": f"python content {i}"} for i in range(20)]
 
         searcher.index(chunks)
         results = searcher.search("python", top_k=5)
@@ -228,3 +224,26 @@ class TestKeywordSearcher:
 
         assert len(results) > 0
         assert results[0]["id"] == 1
+
+    def test_index_empty_does_not_raise(self, searcher):
+        """Test that indexing empty list does not raise ZeroDivisionError (issue #68)."""
+        # Should not raise
+        searcher.index([])
+        assert searcher.bm25 is None
+        assert searcher.chunks == []
+        # Search should return empty list
+        results = searcher.search("python", top_k=10)
+        assert results == []
+
+    def test_reindex_with_empty_list(self, searcher):
+        """Test re-indexing with empty list clears previous index."""
+        # First, index something
+        chunks = [{"id": 1, "text": "python programming"}]
+        searcher.index(chunks)
+        results = searcher.search("python", top_k=10)
+        assert len(results) == 1
+        # Then re-index with empty list
+        searcher.index([])
+        # Search should now return empty
+        results = searcher.search("python", top_k=10)
+        assert results == []
