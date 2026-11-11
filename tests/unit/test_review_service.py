@@ -66,7 +66,9 @@ class TestReviewService:
         mock_db_session.add = Mock()
         mock_db_session.commit = AsyncMock()
         mock_db_session.refresh = AsyncMock()
-        mock_db_session.execute = AsyncMock(return_value=self._mock_execute_result(first=Mock()))
+        mock_db_session.execute = AsyncMock(
+            return_value=self._mock_execute_result(first=Mock(id=profile_id, user_id=user_id))
+        )
 
         with patch("core.services.review_service.Review") as mock_review_cls:
             mock_instance = mock_review_cls.return_value
@@ -106,6 +108,19 @@ class TestReviewService:
                 profile_id,
                 current_user_id,
             )
+
+        assert exc_info.value.status_code == 404
+        assert exc_info.value.detail == "Profile not found"
+        mock_db_session.add.assert_not_called()
+        mock_db_session.commit.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_create_review_rejects_missing_profile(self, mock_db_session):
+        """A missing profile must be rejected before any database write."""
+        mock_db_session.execute.return_value = self._mock_execute_result(first=None)
+
+        with pytest.raises(HTTPException) as exc_info:
+            await create_review(mock_db_session, uuid4(), uuid4())
 
         assert exc_info.value.status_code == 404
         assert exc_info.value.detail == "Profile not found"
@@ -199,7 +214,9 @@ class TestReviewService:
         """Test create_review calls db.add()."""
         profile_id = uuid4()
         user_id = uuid4()
-        mock_db_session.execute = AsyncMock(return_value=self._mock_execute_result(first=Mock()))
+        mock_db_session.execute = AsyncMock(
+            return_value=self._mock_execute_result(first=Mock(id=profile_id, user_id=user_id))
+        )
 
         with patch("core.services.review_service.Review"):
             await create_review(mock_db_session, profile_id, user_id)
@@ -211,7 +228,9 @@ class TestReviewService:
         """Test create_review calls db.commit()."""
         profile_id = uuid4()
         user_id = uuid4()
-        mock_db_session.execute = AsyncMock(return_value=self._mock_execute_result(first=Mock()))
+        mock_db_session.execute = AsyncMock(
+            return_value=self._mock_execute_result(first=Mock(id=profile_id, user_id=user_id))
+        )
 
         with patch("core.services.review_service.Review"):
             await create_review(mock_db_session, profile_id, user_id)
@@ -223,7 +242,9 @@ class TestReviewService:
         """Test create_review calls db.refresh()."""
         profile_id = uuid4()
         user_id = uuid4()
-        mock_db_session.execute = AsyncMock(return_value=self._mock_execute_result(first=Mock()))
+        mock_db_session.execute = AsyncMock(
+            return_value=self._mock_execute_result(first=Mock(id=profile_id, user_id=user_id))
+        )
 
         with patch("core.services.review_service.Review"):
             await create_review(mock_db_session, profile_id, user_id)
@@ -275,7 +296,9 @@ class TestReviewService:
         """Test create_review handles UUID objects correctly."""
         profile_id = uuid4()
         user_id = uuid4()
-        mock_db_session.execute = AsyncMock(return_value=self._mock_execute_result(first=Mock()))
+        mock_db_session.execute = AsyncMock(
+            return_value=self._mock_execute_result(first=Mock(id=profile_id, user_id=user_id))
+        )
 
         with patch("core.services.review_service.Review") as mock_review_cls:
             mock_review_cls.return_value = Mock()
@@ -332,7 +355,9 @@ class TestReviewService:
         """Test review has None for sections and overall_score initially."""
         profile_id = uuid4()
         user_id = uuid4()
-        mock_db_session.execute = AsyncMock(return_value=self._mock_execute_result(first=Mock()))
+        mock_db_session.execute = AsyncMock(
+            return_value=self._mock_execute_result(first=Mock(id=profile_id, user_id=user_id))
+        )
 
         with patch("core.services.review_service.Review") as mock_review_cls:
             mock_review_cls.return_value = Mock()
